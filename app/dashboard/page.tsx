@@ -1,217 +1,442 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 
-type Look = {
+type QuestionType = 'text' | 'choice' | 'multiselect';
+
+type Question = {
   id: string;
-  title: string;
-  occasion: string;
-  steps: string[];
-  palette: string[];
-  notes: string;
-  created_at: string;
+  question: string;
+  subtitle?: string;
+  type: QuestionType;
+  options?: string[];
+  placeholder?: string;
+  optional?: boolean;
 };
 
-const PALETTE_PRESETS: Record<string, string[]> = {
-  'day': ['#F5E6D3', '#E8C5A0', '#D4956A', '#C17A4A', '#8B5A2B'],
-  'evening': ['#2C1810', '#8B3A3A', '#C4614A', '#E8956A', '#F5C49A'],
-  'office': ['#E8E0D5', '#C4B5A0', '#8B7355', '#5C4A32', '#3D3020'],
-  'casual': ['#E8F0E8', '#B5D4B5', '#7AAF7A', '#4A8A4A', '#2D5A2D'],
-  'glam': ['#F5E6F0', '#E8B5D4', '#C47AAF', '#8B3A7A', '#5C1A4A'],
-  'natural': ['#FAF0E6', '#F0D9C0', '#D4A574', '#A67C52', '#7A5C3A'],
+const questions: Question[] = [
+  {
+    id: 'name',
+    question: "First, what's your name?",
+    type: 'text',
+    placeholder: 'e.g. Sarah',
+  },
+  {
+    id: 'age_range',
+    question: 'What is your age range?',
+    type: 'choice',
+    options: ['25–34', '35–44', '45–54', '55+'],
+  },
+  {
+    id: 'vein_color',
+    question: 'Look at the veins on the inside of your wrist. What color are they?',
+    subtitle: 'Check in natural daylight for the most accurate result.',
+    type: 'choice',
+    options: [
+      'Blue or purple',
+      'Green or olive',
+      'A mix of blue and green',
+      'Hard to tell',
+    ],
+  },
+  {
+    id: 'sun_reaction',
+    question: 'How does your skin react to sun exposure?',
+    type: 'choice',
+    options: [
+      'I burn easily and rarely tan',
+      'I burn first, then tan',
+      'I tan easily and rarely burn',
+      'My skin deepens but never burns',
+    ],
+  },
+  {
+    id: 'complexion_depth',
+    question: 'How would you describe your skin tone depth?',
+    type: 'choice',
+    options: [
+      'Very fair',
+      'Fair',
+      'Light',
+      'Light-medium',
+      'Medium',
+      'Medium-deep',
+      'Deep',
+    ],
+  },
+  {
+    id: 'skin_type',
+    question: 'How would you describe your skin type?',
+    type: 'choice',
+    options: [
+      'Very dry',
+      'Drier in winter, less dry in summer',
+      'Combination — oily T-zone, dry otherwise',
+      'Oily',
+      'Acne prone',
+      'Normal',
+    ],
+  },
+  {
+    id: 'hair_color',
+    question: 'How would you describe your natural hair color?',
+    subtitle: 'Be as specific as you like — e.g. medium brown, dark blonde, gray blended.',
+    type: 'text',
+    placeholder: 'e.g. warm medium brown with some gray',
+  },
+  {
+    id: 'eye_color',
+    question: 'How would you describe your eye color?',
+    type: 'text',
+    placeholder: 'e.g. hazel — green-brown mix with gold flecks',
+  },
+  {
+    id: 'jewelry_preference',
+    question: 'Which jewelry tone feels most natural on you?',
+    subtitle: 'Hold a gold and silver piece up to your face — which makes your skin look more alive?',
+    type: 'choice',
+    options: [
+      'Gold — it warms my skin up',
+      'Silver — it brightens my complexion',
+      'Rose gold — it softens my look',
+      'Both look equally good on me',
+    ],
+  },
+  {
+    id: 'makeup_experience',
+    question: 'Which statement feels closest to your experience?',
+    type: 'choice',
+    options: [
+      'Makeup usually looks great on me',
+      'Makeup sometimes looks good, sometimes "off"',
+      'Makeup rarely looks how I expect',
+      'I feel confused by makeup most of the time',
+    ],
+  },
+  {
+    id: 'what_goes_wrong',
+    question: 'When makeup feels "off," what usually happens?',
+    subtitle: 'Select all that apply.',
+    type: 'multiselect',
+    options: [
+      'Blush looks too orange or muddy',
+      'I look tired or gray',
+      'Colors feel overpowering',
+      'My face looks flat or lifeless',
+      'My makeup disappears quickly',
+      "I can't pinpoint the issue",
+    ],
+  },
+  {
+    id: 'help_wanted',
+    question: 'What would you most hope this app helps you with?',
+    type: 'choice',
+    options: [
+      'Confidence while doing my makeup',
+      'Simplifying my choices',
+      'Understanding my undertone for future shopping',
+      'Something else',
+    ],
+  },
+  {
+    id: 'struggle_categories',
+    question: 'Which categories do you struggle with most?',
+    subtitle: 'Select up to 3.',
+    type: 'multiselect',
+    options: [
+      'Blush',
+      'Foundation',
+      'Bronzer',
+      'Lips',
+      'Eyes',
+      'Everything 😅',
+    ],
+  },
+  {
+    id: 'desired_feeling',
+    question: 'How would you like to feel when your makeup is "right"?',
+    subtitle: 'Select up to 3.',
+    type: 'multiselect',
+    options: [
+      'Polished',
+      'Natural',
+      'Confident',
+      'Soft',
+      'Elevated',
+      'Fresh',
+      'Put together',
+      'Effortless',
+    ],
+  },
+  {
+    id: 'situations',
+    question: 'What situations do you most want help with?',
+    type: 'choice',
+    options: [
+      'Everyday / work',
+      'Date night / evenings out',
+      'Special events',
+      'All of the above',
+    ],
+  },
+  {
+    id: 'style_goal',
+    question: 'What do you want your look to say about you?',
+    subtitle: 'In your own words — describe the feeling or impression you want to create.',
+    type: 'text',
+    placeholder: 'e.g. I want to look put-together but not overdone. Warm and confident.',
+  },
+  {
+    id: 'frustrations',
+    question: 'What is your biggest beauty frustration right now?',
+    subtitle: 'Be as specific as you like.',
+    type: 'text',
+    placeholder: 'e.g. I buy blushes that look great in the store but wrong on my face.',
+    optional: true,
+  },
+  {
+    id: 'foundation_product',
+    question: 'What foundation or concealer do you currently use?',
+    subtitle: 'Brand, product name, and shade if you know it.',
+    type: 'text',
+    placeholder: 'e.g. Giorgio Armani Luminous Silk in shade 3.5, or "I don\'t wear foundation"',
+    optional: true,
+  },
+  {
+    id: 'loved_products',
+    question: 'What other products do you currently love or rely on?',
+    subtitle: 'Blush, lip, mascara, skincare — anything you reach for regularly.',
+    type: 'text',
+    placeholder: 'e.g. NARS Orgasm blush, Charlotte Tilbury Pillow Talk lip liner',
+    optional: true,
+  },
+];
+
+const depthMap: Record<string, string> = {
+  'Very fair': 'fair',
+  'Fair': 'fair',
+  'Light': 'light',
+  'Light-medium': 'light-medium',
+  'Medium': 'medium',
+  'Medium-deep': 'medium-deep',
+  'Deep': 'deep',
 };
 
-function getSwatches(occasion: string, palette: string[]): string[] {
-  if (palette && palette.length > 0) return palette;
-  const key = Object.keys(PALETTE_PRESETS).find(k =>
-    occasion?.toLowerCase().includes(k)
-  ) || 'natural';
-  return PALETTE_PRESETS[key];
-}
+const undertoneMap: Record<string, string> = {
+  'Blue or purple': 'cool',
+  'Green or olive': 'warm',
+  'A mix of blue and green': 'neutral',
+  'Hard to tell': 'neutral',
+};
 
-function LookCard({ look, onDelete }: { look: Look; onDelete: (id: string) => void }) {
-  const swatches = getSwatches(look.occasion, look.palette);
+const contrastMap: Record<string, string> = {
+  'Very fair': 'soft',
+  'Fair': 'soft',
+  'Light': 'soft',
+  'Light-medium': 'medium',
+  'Medium': 'medium',
+  'Medium-deep': 'high',
+  'Deep': 'high',
+};
 
-  return (
-    <article className="rounded-3xl border bg-white shadow-sm overflow-hidden">
-      <div className="flex h-3">
-        {swatches.map((color, i) => (
-          <div key={i} className="flex-1" style={{ background: color }} />
-        ))}
-      </div>
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-base">{look.title}</h3>
-            {look.occasion && (
-              <span className="mt-1 inline-block rounded-full bg-neutral-100 px-3 py-0.5 text-xs text-neutral-600">
-                {look.occasion}
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => onDelete(look.id)}
-            className="text-xs text-neutral-300 hover:text-neutral-500"
-          >
-            ✕
-          </button>
-        </div>
-        {look.steps && look.steps.length > 0 && (
-          <ol className="mt-4 grid gap-1.5">
-            {look.steps.map((step, i) => (
-              <li key={i} className="text-sm text-neutral-600">
-                <span className="font-medium text-neutral-900">{i + 1}.</span> {step}
-              </li>
-            ))}
-          </ol>
-        )}
-        {look.notes && (
-          <p className="mt-3 text-xs text-neutral-400 italic">{look.notes}</p>
-        )}
-      </div>
-    </article>
-  );
-}
+export default function IntakePage() {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState<Record<string, string | string[]>>({});
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
-function AddLookModal({ onSave, onClose }: { onSave: (look: Partial<Look>) => void; onClose: () => void }) {
-  const [title, setTitle] = useState('');
-  const [occasion, setOccasion] = useState('');
-  const [stepsText, setStepsText] = useState('');
+  const current = questions[step];
+  const progress = Math.round((step / questions.length) * 100);
+  const isLast = step === questions.length - 1;
+  const answer = form[current.id];
+  const hasAnswer = current.optional
+    ? true
+    : Array.isArray(answer)
+    ? answer.length > 0
+    : typeof answer === 'string' && answer.trim().length > 0;
 
-  function handleSave() {
-    if (!title.trim()) return;
-    const steps = stepsText
-      .split('\n')
-      .map(s => s.trim())
-      .filter(Boolean);
-    onSave({ title, occasion, steps, palette: [] });
+  function selectOption(value: string) {
+    setForm({ ...form, [current.id]: value });
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-6">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-xl">
-        <h2 className="text-xl font-semibold mb-6">Save a look</h2>
-        <div className="grid gap-4">
-          <input
-            className="rounded-2xl border p-3 text-sm"
-            placeholder="Look name (e.g. Effortless Saturday)"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-          />
-          <input
-            className="rounded-2xl border p-3 text-sm"
-            placeholder="Occasion (e.g. casual, evening, office)"
-            value={occasion}
-            onChange={e => setOccasion(e.target.value)}
-          />
-          <textarea
-            className="min-h-[160px] rounded-2xl border p-3 text-sm"
-            placeholder="Steps — one per line&#10;e.g. Tinted moisturizer, fingers&#10;NARS Orgasm blush, light hand&#10;Pillow Talk lip liner + gloss"
-            value={stepsText}
-            onChange={e => setStepsText(e.target.value)}
-          />
-        </div>
-        <div className="mt-6 flex gap-3 justify-end">
-          <button onClick={onClose} className="rounded-2xl border px-5 py-2.5 text-sm">Cancel</button>
-          <button
-            onClick={handleSave}
-            disabled={!title.trim()}
-            className="rounded-2xl bg-black px-5 py-2.5 text-sm text-white disabled:opacity-30"
-          >
-            Save look
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function DashboardPage() {
-  const [looks, setLooks] = useState<Look[]>([]);
-  const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    loadLooks();
-  }, []);
-
-  async function loadLooks() {
-    const res = await fetch('/api/looks');
-    const data = await res.json();
-    if (res.ok) setLooks(data.looks || []);
-  }
-
-  async function saveLook(look: Partial<Look>) {
-    const res = await fetch('/api/looks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(look),
-    });
-    if (res.ok) {
-      setShowModal(false);
-      loadLooks();
+  function toggleMulti(value: string) {
+    const current_vals = (form[current.id] as string[]) || [];
+    if (current_vals.includes(value)) {
+      setForm({ ...form, [current.id]: current_vals.filter(v => v !== value) });
+    } else {
+      setForm({ ...form, [current.id]: [...current_vals, value] });
     }
   }
 
-  async function deleteLook(id: string) {
-    await fetch(`/api/looks?id=${id}`, { method: 'DELETE' });
-    loadLooks();
+  async function next() {
+    if (isLast) {
+      await save();
+    } else {
+      setStep(step + 1);
+    }
+  }
+
+  async function save() {
+    setSaving(true);
+
+    const depth = form.complexion_depth as string || '';
+    const payload = {
+      age_range: form.age_range as string || '',
+      complexion_depth: depthMap[depth] || 'medium',
+      undertone: undertoneMap[form.vein_color as string] || 'neutral',
+      overtone: form.sun_reaction as string || '',
+      contrast_level: contrastMap[depth] || 'medium',
+      eye_color: form.eye_color as string || '',
+      hair_color: form.hair_color as string || '',
+      goals: [
+        form.style_goal,
+        form.help_wanted,
+        form.situations,
+        ...(Array.isArray(form.desired_feeling) ? form.desired_feeling : []),
+      ].filter(Boolean) as string[],
+      frustrations: [
+        form.frustrations,
+        ...(Array.isArray(form.what_goes_wrong) ? form.what_goes_wrong : []),
+      ].filter(Boolean) as string[],
+      preferred_finish: '',
+      preferred_style: Array.isArray(form.desired_feeling) ? form.desired_feeling : [],
+      jewelry_preference: form.jewelry_preference as string || '',
+      wardrobe_colors: '',
+      notes: [
+        form.name ? `Name: ${form.name}` : '',
+        form.skin_type ? `Skin type: ${form.skin_type}` : '',
+        form.makeup_experience ? `Makeup experience: ${form.makeup_experience}` : '',
+        Array.isArray(form.struggle_categories) && form.struggle_categories.length > 0
+          ? `Struggles with: ${form.struggle_categories.join(', ')}`
+          : '',
+        form.foundation_product ? `Foundation: ${form.foundation_product}` : '',
+        form.loved_products ? `Loved products: ${form.loved_products}` : '',
+      ].filter(Boolean).join('. '),
+    };
+
+    const res = await fetch('/api/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      setSaving(false);
+      setGenerating(true);
+      await fetch('/api/dossier', { method: 'POST' });
+      window.location.href = '/dossier';
+    } else {
+      setSaving(false);
+    }
+  }
+
+  if (generating) {
+    return (
+      <main className="mx-auto max-w-xl px-6 py-24 text-center">
+        <h1 className="text-3xl font-semibold tracking-tight">Building your dossier...</h1>
+        <p className="mt-4 text-neutral-500 leading-7">
+          {form.name ? `Hang tight, ${form.name}. ` : 'Hang tight. '}
+          This takes about 15 seconds. Please don't close this page.
+        </p>
+        <div className="mt-8 flex justify-center">
+          <div className="h-2 w-48 rounded-full bg-neutral-100 overflow-hidden">
+            <div className="h-2 rounded-full bg-black animate-pulse w-full" />
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Link href="/intake" className="rounded-3xl border bg-white p-6 shadow-sm hover:bg-neutral-50">
-          <h2 className="font-medium">Intake</h2>
-          <p className="mt-2 text-sm text-neutral-600">Define your undertone, contrast, style goals, and frustrations.</p>
-        </Link>
-        <Link href="/inventory" className="rounded-3xl border bg-white p-6 shadow-sm hover:bg-neutral-50">
-          <h2 className="font-medium">Inventory</h2>
-          <p className="mt-2 text-sm text-neutral-600">Track products, shades, notes, and favorites.</p>
-        </Link>
-        <Link href="/dossier" className="rounded-3xl border bg-white p-6 shadow-sm hover:bg-neutral-50">
-          <h2 className="font-medium">Dossier</h2>
-          <p className="mt-2 text-sm text-neutral-600">Generate personalized style guidance from your data.</p>
-        </Link>
-        <Link href="/refine" className="rounded-3xl border bg-white p-6 shadow-sm hover:bg-neutral-50">
-          <h2 className="font-medium">Refine</h2>
-          <p className="mt-2 text-sm text-neutral-600">Chat with your beauty advisor and log what worked.</p>
-        </Link>
+    <main className="mx-auto max-w-xl px-6 py-16">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm text-neutral-500">Question {step + 1} of {questions.length}</p>
+          <p className="text-sm text-neutral-500">{progress}%</p>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-neutral-100">
+          <div
+            className="h-1.5 rounded-full bg-black transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
-      <div className="mt-12">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">My Playlist</h2>
-            <p className="mt-1 text-sm text-neutral-500">Looks you've saved and made your own.</p>
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="rounded-2xl bg-black px-5 py-2.5 text-sm text-white"
-          >
-            + Save a look
-          </button>
+      <div className="rounded-3xl border bg-white p-8 shadow-sm">
+        <h2 className="text-2xl font-semibold tracking-tight">{current.question}</h2>
+        {current.subtitle && (
+          <p className="mt-2 text-sm text-neutral-500 leading-6">{current.subtitle}</p>
+        )}
+        {current.optional && (
+          <p className="mt-1 text-xs text-neutral-400">Optional — you can skip this one</p>
+        )}
+
+        <div className="mt-6">
+          {current.type === 'choice' && (
+            <div className="grid gap-3">
+              {current.options?.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => selectOption(option)}
+                  className={`rounded-2xl border px-5 py-3 text-left text-sm transition-all ${
+                    answer === option
+                      ? 'border-black bg-black text-white'
+                      : 'border-neutral-200 hover:border-neutral-400'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {current.type === 'multiselect' && (
+            <div className="grid gap-3">
+              {current.options?.map((option) => {
+                const selected = Array.isArray(answer) && answer.includes(option);
+                return (
+                  <button
+                    key={option}
+                    onClick={() => toggleMulti(option)}
+                    className={`rounded-2xl border px-5 py-3 text-left text-sm transition-all flex items-center justify-between ${
+                      selected
+                        ? 'border-black bg-black text-white'
+                        : 'border-neutral-200 hover:border-neutral-400'
+                    }`}
+                  >
+                    {option}
+                    {selected && <span className="text-xs">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {current.type === 'text' && (
+            <textarea
+              className="min-h-[120px] w-full rounded-2xl border border-neutral-200 p-4 text-sm focus:border-black focus:outline-none"
+              placeholder={current.placeholder}
+              value={(answer as string) || ''}
+              onChange={(e) => setForm({ ...form, [current.id]: e.target.value })}
+            />
+          )}
         </div>
 
-        {looks.length === 0 ? (
-          <div className="rounded-3xl border bg-white p-10 text-center">
-            <p className="text-neutral-500 text-sm">No saved looks yet.</p>
-            <p className="mt-2 text-neutral-400 text-sm">Chat with Maya to build a look, or save one manually.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {looks.map(look => (
-              <LookCard key={look.id} look={look} onDelete={deleteLook} />
-            ))}
-          </div>
-        )}
+        <div className="mt-8 flex items-center justify-between">
+          {step > 0 ? (
+            <button onClick={() => setStep(step - 1)} className="text-sm text-neutral-500 underline">
+              Back
+            </button>
+          ) : <span />}
+          <button
+            onClick={next}
+            disabled={!hasAnswer || saving}
+            className="rounded-2xl bg-black px-6 py-3 text-white disabled:opacity-30"
+          >
+            {saving ? 'Saving...' : isLast ? 'Finish' : 'Next'}
+          </button>
+        </div>
       </div>
-
-      {showModal && (
-        <AddLookModal onSave={saveLook} onClose={() => setShowModal(false)} />
-      )}
     </main>
   );
 }
