@@ -45,18 +45,4 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       </p>
       <div className="mt-6 grid gap-4">
         <input
-          className="rounded-2xl border p-3"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className="rounded-2xl border p-3"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button
-          onClick={handleSubmit}
+          className="r
