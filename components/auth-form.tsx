@@ -13,7 +13,6 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     setLoading(true);
     setMessage('');
     const supabase = createClient();
-
     if (mode === 'signup') {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
@@ -29,7 +28,6 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         window.location.href = '/dashboard';
       }
     }
-
     setLoading(false);
   }
 
@@ -39,10 +37,16 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         {mode === 'signup' ? 'Create your account' : 'Welcome back'}
       </h1>
       <p className="mt-2 text-sm text-neutral-600">
-        {mode === 'signup'
-          ? 'Start building your personalized beauty dossier.'
-          : 'Log in to continue refining your style system.'}
+        {mode === 'signup' ? 'Start building your personalized beauty dossier.' : 'Log in to continue refining your style system.'}
       </p>
       <div className="mt-6 grid gap-4">
-        <input
-          className="r
+        <input className="rounded-2xl border p-3" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input className="rounded-2xl border p-3" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-black px-5 py-3 text-white disabled:opacity-50">
+          {loading ? 'Please wait...' : mode === 'signup' ? 'Sign up' : 'Log in'}
+        </button>
+        {message && <p className="text-sm text-neutral-600">{message}</p>}
+      </div>
+    </div>
+  );
+}
