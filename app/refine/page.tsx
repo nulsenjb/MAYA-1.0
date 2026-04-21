@@ -64,8 +64,13 @@ export default function RefinePage() {
       const reply = data.reply;
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
       const looksLike =
-        reply.toLowerCase().includes('step') &&
-        (reply.toLowerCase().includes('look') || reply.toLowerCase().includes('try'));
+        reply.toLowerCase().includes('step') ||
+        reply.toLowerCase().includes('foundation') ||
+        reply.toLowerCase().includes('blush') ||
+        reply.toLowerCase().includes('lip') ||
+        reply.toLowerCase().includes('mascara') ||
+        reply.toLowerCase().includes('concealer') ||
+        reply.length > 300;
       if (looksLike) setLastSuggestedLook(reply);
     }
     setSending(false);
