@@ -108,7 +108,7 @@ const questions: Question[] = [
   {
     id: 'foundation_product',
     question: 'What foundation or concealer do you currently use?',
-    subtitle: 'Brand, product name, and shade if you know it. This helps us understand your current baseline.',
+    subtitle: 'Brand, product name, and shade if you know it.',
     type: 'text',
     placeholder: 'e.g. Giorgio Armani Luminous Silk in shade 3.5, or "I don\'t wear foundation"',
   },
@@ -117,7 +117,7 @@ const questions: Question[] = [
     question: 'What other products do you currently love or rely on?',
     subtitle: 'Blush, lip, mascara, skincare — anything you reach for regularly.',
     type: 'text',
-    placeholder: 'e.g. NARS Orgasm blush, Charlotte Tilbury Pillow Talk lip liner, CeraVe moisturizer',
+    placeholder: 'e.g. NARS Orgasm blush, Charlotte Tilbury Pillow Talk lip liner',
   },
 ];
 
@@ -125,7 +125,7 @@ export default function IntakePage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const current = questions[step];
   const progress = Math.round((step / questions.length) * 100);
@@ -144,69 +144,83 @@ export default function IntakePage() {
     }
   }
 
-async function save() {
-  setSaving(true);
+  async function save() {
+    setSaving(true);
 
-  const depthMap: Record<string, string> = {
-    'Fair — very light, often porcelain': 'fair',
-    'Fair-light — light with some warmth or pink': 'fair-light',
-    'Light — medium-light, neither very fair nor tan': 'light',
-    'Light-medium — golden or peachy light tan': 'light-medium',
-    'Medium — olive, tan, or warm beige': 'medium',
-    'Medium-deep — rich tan or warm brown': 'medium-deep',
-    'Deep — deep brown to darkest brown': 'deep',
-  };
+    const depthMap: Record<string, string> = {
+      'Fair — very light, often porcelain': 'fair',
+      'Fair-light — light with some warmth or pink': 'fair-light',
+      'Light — medium-light, neither very fair nor tan': 'light',
+      'Light-medium — golden or peachy light tan': 'light-medium',
+      'Medium — olive, tan, or warm beige': 'medium',
+      'Medium-deep — rich tan or warm brown': 'medium-deep',
+      'Deep — deep brown to darkest brown': 'deep',
+    };
 
-  const undertoneMap: Record<string, string> = {
-    'Blue or purple': 'cool',
-    'Green or olive': 'warm',
-    'A mix of blue and green': 'neutral',
-    'Hard to tell': 'neutral',
-  };
+    const undertoneMap: Record<string, string> = {
+      'Blue or purple': 'cool',
+      'Green or olive': 'warm',
+      'A mix of blue and green': 'neutral',
+      'Hard to tell': 'neutral',
+    };
 
-  const contrastMap: Record<string, string> = {
-    'Dark brown or black': 'high',
-    'Medium brown': 'medium',
-    'Hazel — green-brown mix': 'medium',
-    'Green': 'medium',
-    'Blue-gray or gray': 'soft',
-    'Blue': 'soft',
-    'Amber or light brown': 'soft',
-  };
+    const contrastMap: Record<string, string> = {
+      'Dark brown or black': 'high',
+      'Medium brown': 'medium',
+      'Hazel — green-brown mix': 'medium',
+      'Green': 'medium',
+      'Blue-gray or gray': 'soft',
+      'Blue': 'soft',
+      'Amber or light brown': 'soft',
+    };
 
-  const payload = {
-    age_range: 'not specified',
-    complexion_depth: depthMap[form.complexion_depth] || 'medium',
-    undertone: undertoneMap[form.vein_color] || 'neutral',
-    overtone: form.sun_reaction || '',
-    contrast_level: contrastMap[form.eye_color] || 'medium',
-    eye_color: form.eye_color || '',
-    hair_color: form.hair_color || '',
-    goals: [form.style_goal].filter(Boolean),
-    frustrations: [form.frustrations].filter(Boolean),
-    preferred_finish: '',
-    preferred_style: [form.jewelry_preference].filter(Boolean),
-    jewelry_preference: form.jewelry_preference || '',
-    wardrobe_colors: '',
-    notes: `Foundation: ${form.foundation_product || 'not specified'}. Loved products: ${form.loved_products || 'not specified'}.`,
-  };
+    const payload = {
+      age_range: 'not specified',
+      complexion_depth: depthMap[form.complexion_depth] || 'medium',
+      undertone: undertoneMap[form.vein_color] || 'neutral',
+      overtone: form.sun_reaction || '',
+      contrast_level: contrastMap[form.eye_color] || 'medium',
+      eye_color: form.eye_color || '',
+      hair_color: form.hair_color || '',
+      goals: [form.style_goal].filter(Boolean),
+      frustrations: [form.frustrations].filter(Boolean),
+      preferred_finish: '',
+      preferred_style: [form.jewelry_preference].filter(Boolean),
+      jewelry_preference: form.jewelry_preference || '',
+      wardrobe_colors: '',
+      notes: `Foundation: ${form.foundation_product || 'not specified'}. Loved products: ${form.loved_products || 'not specified'}.`,
+    };
 
-  const res = await fetch('/api/intake', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+    const res = await fetch('/api/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-  setSaving(false);
-  if (res.ok) setDone(true);
-}
+    if (res.ok) {
+      setSaving(false);
+      setGenerating(true);
+      const dossierRes = await fetch('/api/dossier', { method: 'POST' });
+      if (dossierRes.ok) {
+        window.location.href = '/dossier';
+      } else {
+        window.location.href = '/dossier';
+      }
+    } else {
+      setSaving(false);
+    }
+  }
 
-  if (done) {
+  if (generating) {
     return (
       <main className="mx-auto max-w-xl px-6 py-24 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight">You're all set.</h1>
-        <p className="mt-6 text-neutral-600 leading-7">Your profile has been saved. Head to the Dossier page to generate your personalized beauty guide.</p>
-        <a href="/dossier" className="mt-8 inline-block rounded-2xl bg-black px-6 py-3 text-white">Generate my dossier</a>
+        <h1 className="text-3xl font-semibold tracking-tight">Building your dossier...</h1>
+        <p className="mt-4 text-neutral-500">This takes about 15 seconds. Please don't close this page.</p>
+        <div className="mt-8 flex justify-center">
+          <div className="h-2 w-48 rounded-full bg-neutral-100 overflow-hidden">
+            <div className="h-2 rounded-full bg-black animate-pulse w-full" />
+          </div>
+        </div>
       </main>
     );
   }
