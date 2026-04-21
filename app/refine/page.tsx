@@ -7,12 +7,10 @@ type Message = { id?: string; role: string; content: string; };
 
 export default function RefinePage() {
   const [tab, setTab] = useState<'chat' | 'notes'>('chat');
-
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteMessage, setNoteMessage] = useState('');
   const [noteForm, setNoteForm] = useState({
@@ -52,13 +50,11 @@ export default function RefinePage() {
     setInput('');
     setSending(true);
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: userMessage }),
     });
-
     const data = await res.json();
     if (res.ok) {
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
@@ -130,7 +126,6 @@ export default function RefinePage() {
             <p className="text-sm font-medium">Maya — your beauty advisor</p>
             <button onClick={clearChat} className="text-xs text-neutral-400 underline">Clear chat</button>
           </div>
-
           <div className="h-[480px] overflow-y-auto px-6 py-6 flex flex-col gap-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -152,7 +147,6 @@ export default function RefinePage() {
             )}
             <div ref={bottomRef} />
           </div>
-
           <div className="border-t px-6 py-4 flex gap-3">
             <input
               className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-black focus:outline-none"
