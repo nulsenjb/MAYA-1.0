@@ -144,62 +144,62 @@ export default function IntakePage() {
     }
   }
 
-  async function save() {
-    setSaving(true);
+async function save() {
+  setSaving(true);
 
-    const depthMap: Record<string, string> = {
-      'Fair — very light, often porcelain': 'fair',
-      'Fair-light — light with some warmth or pink': 'fair-light',
-      'Light — medium-light, neither very fair nor tan': 'light',
-      'Light-medium — golden or peachy light tan': 'light-medium',
-      'Medium — olive, tan, or warm beige': 'medium',
-      'Medium-deep — rich tan or warm brown': 'medium-deep',
-      'Deep — deep brown to darkest brown': 'deep',
-    };
+  const depthMap: Record<string, string> = {
+    'Fair — very light, often porcelain': 'fair',
+    'Fair-light — light with some warmth or pink': 'fair-light',
+    'Light — medium-light, neither very fair nor tan': 'light',
+    'Light-medium — golden or peachy light tan': 'light-medium',
+    'Medium — olive, tan, or warm beige': 'medium',
+    'Medium-deep — rich tan or warm brown': 'medium-deep',
+    'Deep — deep brown to darkest brown': 'deep',
+  };
 
-    const undertoneMap: Record<string, string> = {
-      'Blue or purple': 'cool',
-      'Green or olive': 'warm',
-      'A mix of blue and green': 'neutral',
-      'Hard to tell': 'neutral',
-    };
+  const undertoneMap: Record<string, string> = {
+    'Blue or purple': 'cool',
+    'Green or olive': 'warm',
+    'A mix of blue and green': 'neutral',
+    'Hard to tell': 'neutral',
+  };
 
-    const contrastMap: Record<string, string> = {
-      'Dark brown or black': 'high',
-      'Medium brown': 'medium',
-      'Hazel — green-brown mix': 'medium',
-      'Green': 'medium',
-      'Blue-gray or gray': 'soft',
-      'Blue': 'soft',
-      'Amber or light brown': 'soft',
-    };
+  const contrastMap: Record<string, string> = {
+    'Dark brown or black': 'high',
+    'Medium brown': 'medium',
+    'Hazel — green-brown mix': 'medium',
+    'Green': 'medium',
+    'Blue-gray or gray': 'soft',
+    'Blue': 'soft',
+    'Amber or light brown': 'soft',
+  };
 
-    const payload = {
-      age_range: '',
-      complexion_depth: depthMap[form.complexion_depth] || form.complexion_depth,
-      undertone: undertoneMap[form.vein_color] || 'neutral',
-      overtone: form.sun_reaction || '',
-      contrast_level: contrastMap[form.eye_color] || 'medium',
-      eye_color: form.eye_color || '',
-      hair_color: form.hair_color || '',
-      goals: [form.style_goal].filter(Boolean),
-      frustrations: [form.frustrations].filter(Boolean),
-      preferred_finish: '',
-      preferred_style: [form.jewelry_preference].filter(Boolean),
-      jewelry_preference: form.jewelry_preference || '',
-      wardrobe_colors: '',
-      notes: `Foundation: ${form.foundation_product || 'not specified'}. Loved products: ${form.loved_products || 'not specified'}.`,
-    };
+  const payload = {
+    age_range: 'not specified',
+    complexion_depth: depthMap[form.complexion_depth] || 'medium',
+    undertone: undertoneMap[form.vein_color] || 'neutral',
+    overtone: form.sun_reaction || '',
+    contrast_level: contrastMap[form.eye_color] || 'medium',
+    eye_color: form.eye_color || '',
+    hair_color: form.hair_color || '',
+    goals: [form.style_goal].filter(Boolean),
+    frustrations: [form.frustrations].filter(Boolean),
+    preferred_finish: '',
+    preferred_style: [form.jewelry_preference].filter(Boolean),
+    jewelry_preference: form.jewelry_preference || '',
+    wardrobe_colors: '',
+    notes: `Foundation: ${form.foundation_product || 'not specified'}. Loved products: ${form.loved_products || 'not specified'}.`,
+  };
 
-    const res = await fetch('/api/intake', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+  const res = await fetch('/api/intake', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-    setSaving(false);
-    if (res.ok) setDone(true);
-  }
+  setSaving(false);
+  if (res.ok) setDone(true);
+}
 
   if (done) {
     return (
