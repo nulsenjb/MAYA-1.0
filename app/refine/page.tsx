@@ -10,6 +10,8 @@ export default function RefinePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [lastSuggestedLook, setLastSuggestedLook] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteMessage, setNoteMessage] = useState('');
@@ -50,16 +52,38 @@ export default function RefinePage() {
     setInput('');
     setSending(true);
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: userMessage }),
     });
+
     const data = await res.json();
     if (res.ok) {
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      const reply = data.reply;
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      const looksLike =
+        reply.toLowerCase().includes('step') &&
+        (reply.toLowerCase().includes('look') || reply.toLowerCase().includes('try'));
+      if (looksLike) setLastSuggestedLook(reply);
     }
     setSending(false);
+  }
+
+  async function saveLookFromChat() {
+    if (!lastSuggestedLook) return;
+    const lines = lastSuggestedLook.split('\n').filter(Boolean);
+    const title = lines[0].replace(/[^a-zA-Z0-9 ]/g, '').trim().slice(0, 40) || 'Chat Look';
+    const steps = lines.slice(1).filter(l => l.trim().length > 0);
+    await fetch('/api/looks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, occasion: 'chat', steps, palette: [] }),
+    });
+    setSavedMsg('Look saved to playlist!');
+    setLastSuggestedLook(null);
+    setTimeout(() => setSavedMsg(''), 3000);
   }
 
   async function clearChat() {
@@ -68,6 +92,7 @@ export default function RefinePage() {
       role: 'assistant',
       content: "Hi! I'm Maya, your personal beauty advisor. I've reviewed your profile and dossier — feel free to ask me anything. What's on your mind today?",
     }]);
+    setLastSuggestedLook(null);
   }
 
   async function loadNotes() {
@@ -126,6 +151,7 @@ export default function RefinePage() {
             <p className="text-sm font-medium">Maya — your beauty advisor</p>
             <button onClick={clearChat} className="text-xs text-neutral-400 underline">Clear chat</button>
           </div>
+
           <div className="h-[480px] overflow-y-auto px-6 py-6 flex flex-col gap-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -147,6 +173,22 @@ export default function RefinePage() {
             )}
             <div ref={bottomRef} />
           </div>
+
+          {lastSuggestedLook && (
+            <div className="px-6 py-3 border-t bg-neutral-50 flex items-center justify-between gap-4">
+              <p className="text-xs text-neutral-500">Maya suggested a look — want to save it?</p>
+              <button onClick={saveLookFromChat} className="rounded-xl bg-black px-4 py-2 text-xs text-white">
+                Save to playlist
+              </button>
+            </div>
+          )}
+
+          {savedMsg && (
+            <div className="px-6 py-2 bg-neutral-50 text-xs text-neutral-500 text-center border-t">
+              {savedMsg}
+            </div>
+          )}
+
           <div className="border-t px-6 py-4 flex gap-3">
             <input
               className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-black focus:outline-none"
@@ -179,7 +221,12 @@ export default function RefinePage() {
                 <option value="mixed">mixed</option>
                 <option value="fail">fail</option>
               </select>
-              <textarea className="min-h-[140px] rounded-2xl border p-3" placeholder="What worked, what failed, what to repeat" value={noteForm.note} onChange={(e) => setNoteForm({ ...noteForm, note: e.target.value })} />
+              <textarea
+                className="min-h-[140px] rounded-2xl border p-3"
+                placeholder="What worked, what failed, what to repeat"
+                value={noteForm.note}
+                onChange={(e) => setNoteForm({ ...noteForm, note: e.target.value })}
+              />
               <button className="rounded-2xl bg-black px-5 py-3 text-white" onClick={addNote}>Save note</button>
               {noteMessage && <p className="text-sm text-neutral-600">{noteMessage}</p>}
             </div>
