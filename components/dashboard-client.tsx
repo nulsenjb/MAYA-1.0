@@ -55,10 +55,18 @@ export function DashboardClient({ intakeComplete, firstName, inventoryCount }: P
     inputRef.current?.focus();
   }
 
+  if (!intakeComplete) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-xl">
+          <ProfileBuilderCard />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
-      {!intakeComplete && <ProfileBuilderCard />}
-
       <ChatHero
         input={input}
         setInput={setInput}

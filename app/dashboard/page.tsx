@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const [{ data: intake }, { count: inventoryCount }] = await Promise.all([
     supabase
       .from('intake_profiles')
-      .select('notes')
+      .select('notes, complexion_depth, age_range')
       .eq('user_id', user.id)
       .maybeSingle(),
     supabase
@@ -19,7 +19,13 @@ export default async function DashboardPage() {
       .eq('user_id', user.id),
   ]);
 
-  const intakeComplete = !!intake;
+  const intakeComplete = Boolean(
+    intake &&
+      intake.complexion_depth &&
+      String(intake.complexion_depth).trim() &&
+      intake.age_range &&
+      String(intake.age_range).trim()
+  );
   const nameMatch = intake?.notes?.match(/Name:\s*([^.]+)/);
   const firstName = nameMatch ? nameMatch[1].trim().split(' ')[0] : '';
 
