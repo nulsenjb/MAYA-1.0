@@ -201,11 +201,7 @@ export default function IntakePage() {
       setSaving(false);
       setGenerating(true);
       const dossierRes = await fetch('/api/dossier', { method: 'POST' });
-      if (dossierRes.ok) {
-        window.location.href = '/dossier';
-      } else {
-        window.location.href = '/dossier';
-      }
+      window.location.href = '/dashboard';
     } else {
       setSaving(false);
     }

@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  const protectedPaths = ['/dashboard', '/intake', '/inventory', '/dossier', '/refine'];
+  const protectedPaths = ['/dashboard', '/intake', '/inventory', '/dossier', '/refine', '/videos'];
   const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
   if (isProtected && !user) {
@@ -33,5 +33,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/intake/:path*', '/inventory/:path*', '/dossier/:path*', '/refine/:path*'],
+  matcher: ['/dashboard/:path*', '/intake/:path*', '/inventory/:path*', '/dossier/:path*', '/refine/:path*', '/videos/:path*'],
 };

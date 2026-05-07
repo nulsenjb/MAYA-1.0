@@ -5,6 +5,11 @@ export default function HomePage() {
     <main className="min-h-screen">
       <section className="mx-auto max-w-6xl px-6 py-24">
         <div className="max-w-3xl">
+          <div className="text-center mb-8">
+            <div className="text-3xl font-light tracking-[0.22em] uppercase text-neutral-900">
+              MAYA
+            </div>
+          </div>
           <p className="mb-4 text-sm uppercase tracking-[0.2em] text-neutral-500">
             Personalized beauty, style, and harmony
           </p>
@@ -12,9 +17,7 @@ export default function HomePage() {
             Unlock the magic already inside you.
           </h1>
           <p className="mt-6 text-lg leading-8 text-neutral-600">
-            Build your beauty profile, track what you own, generate a personalized dossier,
-            and refine your style over time with guidance tailored to your undertone,
-            contrast, wardrobe, and real-life results.
+            Discover the colors, combinations, and techniques that bring your features into harmony — personalized to your undertone, contrast, wardrobe, and the products you already own.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/auth/signup" className="rounded-2xl bg-black px-5 py-3 text-white">Get started</Link>
