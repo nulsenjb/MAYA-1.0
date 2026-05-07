@@ -105,10 +105,10 @@ function ProfileBuilderCard() {
 
       <div className="relative z-10">
         <h2 className="text-xl font-semibold tracking-tight mb-2">
-          Let&apos;s build your profile.
+          Your beauty profile begins here.
         </h2>
         <p className="text-sm text-neutral-500 leading-relaxed mb-6 max-w-lg">
-          Maya builds your looks around your actual coloring, the products you own, and how you like to wear makeup. Takes about 5 minutes.
+          We&apos;ll guide you through a thoughtful intake designed to understand your coloring, features, style preferences, and the products you already own — so your recommendations feel personalized, harmonious, and uniquely yours.
         </p>
 
         <div>
