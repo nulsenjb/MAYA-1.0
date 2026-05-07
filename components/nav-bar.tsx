@@ -15,7 +15,7 @@ const TABS = [
 export function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
-  if (pathname === '/' || pathname.startsWith('/auth')) return null;
+  if (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/intake')) return null;
 
   async function handleSignOut() {
     const supabase = createClient();
