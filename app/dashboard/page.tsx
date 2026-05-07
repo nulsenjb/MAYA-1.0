@@ -19,8 +19,6 @@ export default async function DashboardPage() {
       .eq('user_id', user.id),
   ]);
 
-  if (!intake) redirect('/intake');
-
   const intakeComplete = !!intake;
   const nameMatch = intake?.notes?.match(/Name:\s*([^.]+)/);
   const firstName = nameMatch ? nameMatch[1].trim().split(' ')[0] : '';

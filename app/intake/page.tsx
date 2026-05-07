@@ -80,9 +80,14 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+function mapAiDepth(aiDepth: string): string {
+  const normalized = aiDepth.toLowerCase().trim();
+  return DEPTH_OPTIONS.find((opt) => opt.toLowerCase() === normalized) ?? '';
+}
+
 export default function IntakePage() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
 
   const [ageRange, setAgeRange] = useState('');
@@ -102,7 +107,6 @@ export default function IntakePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [analysisConfirmed, setAnalysisConfirmed] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
@@ -141,7 +145,6 @@ export default function IntakePage() {
     setPhotos(merged);
     setPhotoPreviews(merged.map((f) => URL.createObjectURL(f)));
     setAnalysisResult(null);
-    setAnalysisConfirmed(false);
     setIsAdjusting(false);
   }
 
@@ -151,7 +154,6 @@ export default function IntakePage() {
     setPhotos(next);
     setPhotoPreviews(next.map((f) => URL.createObjectURL(f)));
     setAnalysisResult(null);
-    setAnalysisConfirmed(false);
     setIsAdjusting(false);
   }
 
@@ -182,6 +184,22 @@ export default function IntakePage() {
     setAnalysisResult({ ...analysisResult, [field]: value });
   }
 
+  function confirmAndAdvance() {
+    if (!analysisResult) return;
+    setIsAdjusting(false);
+    setHairColor(analysisResult.hairColor);
+    setEyeColor(analysisResult.eyeColor);
+    const mappedDepth = mapAiDepth(analysisResult.depth);
+    if (mappedDepth) setComplexionDepth(mappedDepth);
+    setCurrentStep(1);
+    window.scrollTo({ top: 0 });
+  }
+
+  function skipPhoto() {
+    setCurrentStep(1);
+    window.scrollTo({ top: 0 });
+  }
+
   function canProceed(): boolean {
     switch (currentStep) {
       case 1:
@@ -191,8 +209,6 @@ export default function IntakePage() {
       case 3:
         return Boolean(productsList.trim() && struggleCategories.length > 0);
       case 4:
-        return Boolean(analysisResult && analysisConfirmed);
-      case 5:
         return Boolean(desiredFeeling.length > 0 && targetSituations);
       default:
         return false;
@@ -201,7 +217,7 @@ export default function IntakePage() {
 
   function next() {
     if (!canProceed()) return;
-    if (currentStep === 5) {
+    if (currentStep === 4) {
       setShowCompletion(true);
     } else {
       setCurrentStep(currentStep + 1);
@@ -210,7 +226,7 @@ export default function IntakePage() {
   }
 
   function back() {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
       window.scrollTo({ top: 0 });
     }
@@ -221,9 +237,9 @@ export default function IntakePage() {
     setSaveError(null);
     const payload = {
       age_range: ageRange,
-      hair_color: analysisResult?.hairColor || hairColor,
-      eye_color: analysisResult?.eyeColor || eyeColor,
-      complexion_depth: analysisResult?.depth || complexionDepth,
+      hair_color: hairColor,
+      eye_color: eyeColor,
+      complexion_depth: complexionDepth,
       undertone: analysisResult?.undertone || 'neutral',
       ai_summary: analysisResult?.summary || '',
       makeup_experience: makeupExperience,
@@ -269,12 +285,176 @@ export default function IntakePage() {
     );
   }
 
+  if (currentStep === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen flex flex-col px-6 py-10 max-w-xl mx-auto w-full">
+          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-3">
+            Step 1 of 5 · Photo
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 mb-3">
+            Let&apos;s start with your photo.
+          </h1>
+          <p className="text-sm text-neutral-500 leading-relaxed mb-8">
+            Maya uses your photo to analyze your undertone, skin depth, hair color, and eye color — so every recommendation is built around how you actually look, not a generalized type.
+          </p>
+
+          <div className="rounded-2xl border border-neutral-200 bg-white p-5 mb-6">
+            <h2 className="text-sm font-semibold text-neutral-800 mb-3">Your privacy, simply put.</h2>
+            <TrustRow icon="🔒" text="Your photo is never stored. Maya analyzes it and immediately discards it — we only keep the results." />
+            <TrustRow icon="✦" text="Analysis happens privately. Your image is processed by OpenAI's vision API under strict data handling policies." />
+            <TrustRow icon="◎" text="You're always in control. Review and adjust any result before moving on." />
+          </div>
+
+          {photos.length === 0 ? (
+            <>
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <Step0GuidanceCard icon="🪟" label="Near a window" desc="Natural daylight" />
+                <Step0GuidanceCard icon="✦" label="No filters" desc="Raw photo only" />
+                <Step0GuidanceCard icon="◎" label="Minimal makeup" desc="Bare face preferred" />
+              </div>
+
+              <div className="flex gap-3 w-full mb-4">
+                <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
+                  <span className="text-2xl">📷</span>
+                  <span className="text-sm font-medium text-neutral-700">Take photo</span>
+                  <span className="text-xs text-neutral-400">Use your camera</span>
+                </label>
+                <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  <span className="text-2xl">🖼</span>
+                  <span className="text-sm font-medium text-neutral-700">Upload photo</span>
+                  <span className="text-xs text-neutral-400">Choose from library</span>
+                </label>
+              </div>
+
+              <p className="text-xs text-neutral-400 text-center mb-4">JPEG or PNG · Up to 10MB</p>
+
+              <button
+                type="button"
+                onClick={skipPhoto}
+                className="text-xs text-neutral-400 underline cursor-pointer text-center block w-full"
+              >
+                Skip for now, I&apos;ll answer manually
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2">
+                {photoPreviews.map((src, i) => (
+                  <div key={src} className="relative rounded-xl overflow-hidden aspect-square bg-neutral-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="upload preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      aria-label="Remove photo"
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/90 border border-neutral-200 text-xs text-neutral-700 flex items-center justify-center hover:bg-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {photos.length < MAX_PHOTOS && (
+                <>
+                  <p className="text-sm text-neutral-500 text-center mt-4 mb-2">
+                    Want to add more angles?
+                  </p>
+                  <label className="block w-full text-center cursor-pointer rounded-xl border border-neutral-200 bg-white py-3 text-sm text-neutral-700 hover:border-neutral-400 transition-colors">
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    + Add another photo
+                  </label>
+                </>
+              )}
+
+              {!analysisResult && (
+                <button
+                  type="button"
+                  onClick={analyzePhotos}
+                  disabled={isAnalyzing}
+                  className={`w-full rounded-xl bg-neutral-900 text-white py-3.5 text-sm font-semibold mt-6 hover:bg-neutral-700 transition-colors disabled:opacity-60 ${
+                    isAnalyzing ? 'animate-pulse' : ''
+                  }`}
+                >
+                  {isAnalyzing ? 'Analyzing…' : 'Analyze my coloring'}
+                </button>
+              )}
+
+              {analysisError && (
+                <p className="mt-3 text-xs text-red-500 text-center">{analysisError}</p>
+              )}
+
+              {analysisResult && (
+                <div className="rounded-2xl border border-neutral-200 bg-white p-6 mt-6">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
+                    Maya&apos;s analysis
+                  </div>
+                  {!isAdjusting ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <ResultField label="Undertone" value={analysisResult.undertone} />
+                      <ResultField label="Depth" value={analysisResult.depth} />
+                      <ResultField label="Hair color" value={analysisResult.hairColor} />
+                      <ResultField label="Eye color" value={analysisResult.eyeColor} />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      <AdjustField label="Undertone" value={analysisResult.undertone} onChange={(v) => updateAnalysisField('undertone', v)} />
+                      <AdjustField label="Depth" value={analysisResult.depth} onChange={(v) => updateAnalysisField('depth', v)} />
+                      <AdjustField label="Hair color" value={analysisResult.hairColor} onChange={(v) => updateAnalysisField('hairColor', v)} />
+                      <AdjustField label="Eye color" value={analysisResult.eyeColor} onChange={(v) => updateAnalysisField('eyeColor', v)} />
+                    </div>
+                  )}
+                  <p className="text-xs text-neutral-500 leading-relaxed mt-4 pt-4 border-t border-neutral-100">
+                    {analysisResult.summary}
+                  </p>
+                </div>
+              )}
+
+              {analysisResult && (
+                <div className="mt-5">
+                  <p className="text-sm font-semibold text-neutral-800 text-center mb-3">
+                    Does this feel accurate?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={confirmAndAdvance}
+                      className="flex-1 rounded-xl bg-neutral-900 text-white py-3 text-sm font-semibold hover:bg-neutral-700 transition-colors"
+                    >
+                      {isAdjusting ? 'Save changes' : 'Yes, looks right'}
+                    </button>
+                    {!isAdjusting && (
+                      <button
+                        type="button"
+                        onClick={() => setIsAdjusting(true)}
+                        className="flex-1 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-800 hover:border-neutral-400 transition-colors"
+                      >
+                        Let me adjust
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {photoError && (
+            <p className="mt-3 text-xs text-red-500 text-center">{photoError}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col">
       <div className="w-full bg-neutral-100 h-0.5">
         <div
           className="bg-neutral-900 h-0.5 transition-all duration-500"
-          style={{ width: `${(currentStep / 5) * 100}%` }}
+          style={{ width: `${(currentStep / 4) * 100}%` }}
         />
       </div>
 
@@ -282,7 +462,7 @@ export default function IntakePage() {
         {currentStep === 1 && (
           <>
             <SectionHeader
-              stepNum={1}
+              stepNum={2}
               title="About you."
               subtitle="Let's start with the basics — this is the foundation everything else builds on."
             />
@@ -333,7 +513,7 @@ export default function IntakePage() {
         {currentStep === 2 && (
           <>
             <SectionHeader
-              stepNum={2}
+              stepNum={3}
               title="Your makeup experience."
               subtitle="This part matters as much as anything else. Be honest — there are no wrong answers."
             />
@@ -380,7 +560,7 @@ export default function IntakePage() {
         {currentStep === 3 && (
           <>
             <SectionHeader
-              stepNum={3}
+              stepNum={4}
               title="Your products."
               subtitle="Start simple. We'll build from here."
             />
@@ -416,177 +596,6 @@ export default function IntakePage() {
         )}
 
         {currentStep === 4 && (
-          <>
-            <SectionHeader
-              stepNum={4}
-              title="Your photo."
-              subtitle="This is where the magic starts. Maya uses your photo to analyze your undertone, depth, and coloring — so every recommendation is built around how you actually look."
-            />
-
-            {photos.length === 0 && (
-              <div className="grid grid-cols-3 gap-3 mb-8">
-                <GuidanceCard icon="🪟" label="Near a window" desc="Natural daylight, facing the light source" />
-                <GuidanceCard icon="✦" label="No filters" desc="Raw photo, no editing or beauty mode" />
-                <GuidanceCard icon="◎" label="Minimal makeup" desc="Bare face or very light coverage" />
-              </div>
-            )}
-
-            {photos.length === 0 ? (
-              <>
-                <div className="flex gap-3 w-full">
-                  <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
-                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
-                    <span className="text-2xl">📷</span>
-                    <span className="text-sm font-medium text-neutral-700">Take photo</span>
-                    <span className="text-xs text-neutral-400">Use your camera</span>
-                  </label>
-                  <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
-                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                    <span className="text-2xl">🖼</span>
-                    <span className="text-sm font-medium text-neutral-700">Upload photo</span>
-                    <span className="text-xs text-neutral-400">Choose from library</span>
-                  </label>
-                </div>
-                <p className="text-xs text-neutral-400 text-center mt-3">JPEG or PNG · Up to 10MB</p>
-              </>
-            ) : (
-              <>
-                <div className="grid grid-cols-3 gap-2">
-                  {photoPreviews.map((src, i) => (
-                    <div key={src} className="relative rounded-xl overflow-hidden aspect-square bg-neutral-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="upload preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(i)}
-                        aria-label="Remove photo"
-                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/90 border border-neutral-200 text-xs text-neutral-700 flex items-center justify-center hover:bg-white"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {photos.length < MAX_PHOTOS && (
-                  <>
-                    <p className="text-sm text-neutral-500 text-center mt-4 mb-2">
-                      Want to add more angles?
-                    </p>
-                    <label className="block w-full text-center cursor-pointer rounded-xl border border-neutral-200 bg-white py-3 text-sm text-neutral-700 hover:border-neutral-400 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handlePhotoUpload}
-                        capture="user"
-                      />
-                      + Add another photo
-                    </label>
-                  </>
-                )}
-
-                {!analysisResult && (
-                  <button
-                    type="button"
-                    onClick={analyzePhotos}
-                    disabled={isAnalyzing}
-                    className={`w-full rounded-xl bg-neutral-900 text-white py-3.5 text-sm font-semibold mt-6 hover:bg-neutral-700 transition-colors disabled:opacity-60 ${
-                      isAnalyzing ? 'animate-pulse' : ''
-                    }`}
-                  >
-                    {isAnalyzing ? 'Analyzing…' : 'Analyze my coloring'}
-                  </button>
-                )}
-
-                {analysisError && (
-                  <p className="mt-3 text-xs text-red-500 text-center">{analysisError}</p>
-                )}
-
-                {analysisResult && (
-                  <div className="rounded-2xl border border-neutral-200 bg-white p-6 mt-6">
-                    <div className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
-                      Maya&apos;s analysis
-                    </div>
-                    {!isAdjusting ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        <ResultField label="Undertone" value={analysisResult.undertone} />
-                        <ResultField label="Depth" value={analysisResult.depth} />
-                        <ResultField label="Hair color" value={analysisResult.hairColor} />
-                        <ResultField label="Eye color" value={analysisResult.eyeColor} />
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3">
-                        <AdjustField
-                          label="Undertone"
-                          value={analysisResult.undertone}
-                          onChange={(v) => updateAnalysisField('undertone', v)}
-                        />
-                        <AdjustField
-                          label="Depth"
-                          value={analysisResult.depth}
-                          onChange={(v) => updateAnalysisField('depth', v)}
-                        />
-                        <AdjustField
-                          label="Hair color"
-                          value={analysisResult.hairColor}
-                          onChange={(v) => updateAnalysisField('hairColor', v)}
-                        />
-                        <AdjustField
-                          label="Eye color"
-                          value={analysisResult.eyeColor}
-                          onChange={(v) => updateAnalysisField('eyeColor', v)}
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-neutral-500 leading-relaxed mt-4 pt-4 border-t border-neutral-100">
-                      {analysisResult.summary}
-                    </p>
-                  </div>
-                )}
-
-                {analysisResult && !analysisConfirmed && (
-                  <div className="mt-5">
-                    <p className="text-sm font-semibold text-neutral-800 text-center mb-3">
-                      Does this feel accurate?
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAnalysisConfirmed(true);
-                          setIsAdjusting(false);
-                        }}
-                        className="flex-1 rounded-xl bg-neutral-900 text-white py-3 text-sm font-semibold hover:bg-neutral-700 transition-colors"
-                      >
-                        {isAdjusting ? 'Save changes' : 'Yes, looks right'}
-                      </button>
-                      {!isAdjusting && (
-                        <button
-                          type="button"
-                          onClick={() => setIsAdjusting(true)}
-                          className="flex-1 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-800 hover:border-neutral-400 transition-colors"
-                        >
-                          Let me adjust
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {analysisResult && analysisConfirmed && (
-                  <p className="mt-4 text-xs text-neutral-400 text-center">Looks good. Continue when ready.</p>
-                )}
-              </>
-            )}
-
-            {photoError && (
-              <p className="mt-3 text-xs text-red-500 text-center">{photoError}</p>
-            )}
-          </>
-        )}
-
-        {currentStep === 5 && (
           <>
             <SectionHeader
               stepNum={5}
@@ -626,24 +635,20 @@ export default function IntakePage() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 px-6 py-4">
         <div className="max-w-xl mx-auto flex items-center justify-between">
-          {currentStep > 1 ? (
-            <button
-              type="button"
-              onClick={back}
-              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
-            >
-              Back
-            </button>
-          ) : (
-            <span />
-          )}
+          <button
+            type="button"
+            onClick={back}
+            className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+          >
+            Back
+          </button>
           <button
             type="button"
             onClick={next}
             disabled={!canProceed()}
             className="rounded-xl bg-neutral-900 text-white px-6 py-3 text-sm font-semibold hover:bg-neutral-700 transition-colors disabled:opacity-40"
           >
-            {currentStep === 5 ? 'Finish' : 'Next'}
+            {currentStep === 4 ? 'Finish' : 'Next'}
           </button>
         </div>
       </div>
@@ -755,12 +760,29 @@ function Textarea({
   );
 }
 
-function GuidanceCard({ icon, label, desc }: { icon: string; label: string; desc: string }) {
+function TrustRow({ icon, text }: { icon: string; text: string }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
-      <div className="text-xl mb-2">{icon}</div>
-      <p className="text-xs font-semibold text-neutral-800 mb-1">{label}</p>
-      <p className="text-[11px] text-neutral-500 leading-snug">{desc}</p>
+    <div className="flex items-start gap-3 mb-2 last:mb-0">
+      <span className="text-base shrink-0">{icon}</span>
+      <p className="text-xs text-neutral-500 leading-relaxed">{text}</p>
+    </div>
+  );
+}
+
+function Step0GuidanceCard({
+  icon,
+  label,
+  desc,
+}: {
+  icon: string;
+  label: string;
+  desc: string;
+}) {
+  return (
+    <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-3 text-center">
+      <div className="text-lg mb-1">{icon}</div>
+      <div className="text-xs font-semibold text-neutral-800">{label}</div>
+      <div className="text-[11px] text-neutral-500">{desc}</div>
     </div>
   );
 }
