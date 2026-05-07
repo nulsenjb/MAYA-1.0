@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowUp } from 'lucide-react';
 
 const profileBullets = [
@@ -315,6 +316,7 @@ function TilesSection({
               valueLabel="Undertone"
               meta="Warm autumn · Medium depth · Soft natural"
               badge="Updated recently"
+              extraLink={{ href: '/dossier', label: 'View your dossier →' }}
             />
             <ReturningTile
               glow={tileGlows.stash}
@@ -431,6 +433,7 @@ type ReturningTileProps = {
   valueLabel: string;
   meta: string;
   badge: string;
+  extraLink?: { href: string; label: string };
 };
 
 function ReturningTile({
@@ -443,10 +446,21 @@ function ReturningTile({
   valueLabel,
   meta,
   badge,
+  extraLink,
 }: ReturningTileProps) {
+  const router = useRouter();
+
   return (
-    <Link
-      href={href}
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(href)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          router.push(href);
+        }
+      }}
       className="relative overflow-hidden rounded-2xl border bg-white cursor-pointer hover:border-neutral-300 hover:-translate-y-px transition-all"
     >
       <TileGlowEl glow={glow} />
@@ -468,7 +482,16 @@ function ReturningTile({
         <span className="mt-2 self-start inline-block text-[10px] font-medium bg-neutral-50 border border-neutral-100 rounded-full px-2 py-0.5 text-neutral-400">
           {badge}
         </span>
+        {extraLink && (
+          <Link
+            href={extraLink.href}
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs font-medium text-neutral-400 hover:text-neutral-600 mt-2 block relative z-10"
+          >
+            {extraLink.label}
+          </Link>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }

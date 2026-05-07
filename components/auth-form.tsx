@@ -4,9 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 
-export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
+type Props = {
+  mode: 'login' | 'signup';
+  successRedirect?: string;
+};
+
+export function AuthForm({ mode, successRedirect = '/dashboard' }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [confirmed, setConfirmed] = useState(false);
@@ -21,7 +27,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       if (error) {
         setError(error.message);
       } else if (data.session) {
-        window.location.href = '/dashboard';
+        window.location.href = successRedirect;
       } else {
         setConfirmed(true);
       }
@@ -30,7 +36,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       if (error) {
         setError(error.message);
       } else {
-        window.location.href = '/dashboard';
+        window.location.href = successRedirect;
       }
     }
     setLoading(false);
@@ -74,14 +80,23 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
         />
-        <input
-          className="rounded-2xl border border-neutral-200 p-3 text-sm focus:border-black focus:outline-none"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-        />
+        <div className="relative flex items-center rounded-2xl border border-neutral-200 px-3 focus-within:border-black transition-colors">
+          <input
+            className="flex-1 bg-transparent border-none outline-none py-3 text-sm"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors shrink-0 pr-1"
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
         <button
           onClick={handleSubmit}
           disabled={loading || !email || !password}

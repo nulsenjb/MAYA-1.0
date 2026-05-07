@@ -16,12 +16,10 @@ export function NavBar() {
             MAYA
           </span>
         </Link>
-        <nav className="flex flex-wrap gap-4 text-sm text-neutral-600">
-          <Link href="/dashboard">Home</Link>
+        <nav className="flex flex-wrap items-center gap-4 text-sm text-neutral-600">
           <Link href="/intake">Profile</Link>
-          <Link href="/inventory">Inventory</Link>
-          <Link href="/dossier">Dossier</Link>
-          <Link href="/refine">Notes</Link>
+          <Link href="/inventory">My Stash</Link>
+          <Link href="/refine">Refine</Link>
           <Link href="/videos">Videos</Link>
           <SignOutButton />
         </nav>

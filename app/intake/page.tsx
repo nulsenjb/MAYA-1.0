@@ -432,18 +432,23 @@ export default function IntakePage() {
             )}
 
             {photos.length === 0 ? (
-              <label className="block w-full border-2 border-dashed border-neutral-200 rounded-2xl p-10 text-center cursor-pointer hover:border-neutral-400 transition-colors bg-white">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                  capture="user"
-                />
-                <div className="text-2xl text-neutral-400 mb-2">↑</div>
-                <p className="text-sm text-neutral-700">Tap to upload your photo</p>
-                <p className="text-xs text-neutral-400 mt-1">JPEG or PNG · Up to 10MB</p>
-              </label>
+              <>
+                <div className="flex gap-3 w-full">
+                  <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
+                    <span className="text-2xl">📷</span>
+                    <span className="text-sm font-medium text-neutral-700">Take photo</span>
+                    <span className="text-xs text-neutral-400">Use your camera</span>
+                  </label>
+                  <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    <span className="text-2xl">🖼</span>
+                    <span className="text-sm font-medium text-neutral-700">Upload photo</span>
+                    <span className="text-xs text-neutral-400">Choose from library</span>
+                  </label>
+                </div>
+                <p className="text-xs text-neutral-400 text-center mt-3">JPEG or PNG · Up to 10MB</p>
+              </>
             ) : (
               <>
                 <div className="grid grid-cols-3 gap-2">
