@@ -5,7 +5,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       <section className="mx-auto max-w-6xl px-6 py-24">
         <div className="max-w-3xl">
-          <div className="text-center mb-8">
+          <div className="mb-8">
             <div className="text-3xl font-light tracking-[0.22em] uppercase text-neutral-900">
               MAYA
             </div>
