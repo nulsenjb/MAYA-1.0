@@ -114,6 +114,7 @@ export default function IntakePage() {
   const [targetSituations, setTargetSituations] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -257,11 +258,40 @@ export default function IntakePage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Save failed');
-      router.push('/dashboard');
     } catch {
       setIsSaving(false);
       setSaveError('Could not save profile. Please try again.');
+      return;
     }
+
+    setIsGenerating(true);
+    try {
+      const dossierRes = await fetch('/api/dossier', { method: 'POST' });
+      if (dossierRes.ok) {
+        router.push('/dossier?new=true');
+      } else {
+        router.push('/dashboard');
+      }
+    } catch {
+      router.push('/dashboard');
+    }
+  }
+
+  if (isGenerating) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
+        <div className="text-4xl mb-6 animate-spin" style={{ animationDuration: '3s' }}>✦</div>
+        <h1 className="text-2xl font-semibold tracking-tight mb-3">
+          Building your profile…
+        </h1>
+        <p className="text-sm text-neutral-500 leading-relaxed max-w-sm">
+          Maya is analyzing your coloring and creating your personalized beauty guide. This takes about 20 seconds.
+        </p>
+        <div className="mt-8 w-48 h-0.5 bg-neutral-100 rounded-full overflow-hidden">
+          <div className="h-full bg-neutral-900 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+        </div>
+      </div>
+    );
   }
 
   if (showCompletion) {
