@@ -6,7 +6,7 @@ import { SignOutButton } from '@/components/sign-out-button';
 
 export function NavBar() {
   const pathname = usePathname();
-  if (pathname === '/') return null;
+  if (pathname === '/' || pathname.startsWith('/auth')) return null;
 
   return (
     <header className="border-b border-neutral-200 bg-white/90 backdrop-blur">
