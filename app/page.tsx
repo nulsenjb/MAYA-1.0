@@ -16,7 +16,7 @@ export default function HomePage() {
           Unlock the magic already inside you.
         </h1>
         <p className="mt-6 text-lg leading-8 text-neutral-600">
-          Discover the colors, combinations, and techniques that bring your features into harmony — personalized to your undertone, contrast, wardrobe, and the products you already own.
+          A personalized approach to beauty and style that helps you understand your coloring, refine your routine, and create harmony across the products, tones, and looks that work best for you.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
