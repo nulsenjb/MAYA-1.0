@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { SignOutButton } from '@/components/sign-out-button';
 
 const TABS = [
-  { href: '/intake', label: 'Profile', icon: '◎' },
+  { href: '/profile', label: 'Profile', icon: '◎' },
   { href: '/inventory', label: 'My Stash', icon: '▣' },
   { href: '/refine', label: 'Refine', icon: '↺' },
   { href: '/videos', label: 'Videos', icon: '▶' },
@@ -33,7 +33,7 @@ export function NavBar() {
             </span>
           </Link>
           <nav className="hidden md:flex flex-wrap items-center gap-4 text-sm text-neutral-600">
-            <Link href="/intake">Profile</Link>
+            <Link href="/profile">Profile</Link>
             <Link href="/inventory">My Stash</Link>
             <Link href="/refine">Refine</Link>
             <Link href="/videos">Videos</Link>

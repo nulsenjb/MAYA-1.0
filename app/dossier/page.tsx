@@ -20,8 +20,6 @@ function DossierContent() {
   const isNew = searchParams.get('new') === 'true';
 
   const [initialLoading, setInitialLoading] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [dossier, setDossier] = useState<StoredDossier | null>(null);
 
   useEffect(() => {
@@ -47,56 +45,38 @@ function DossierContent() {
     return () => { cancelled = true; };
   }, []);
 
-  async function generateDossier() {
-    setLoading(true);
-    setError('');
-    const res = await fetch('/api/dossier', { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error || 'Failed to generate dossier'); setLoading(false); return; }
-    setDossier(data.dossier);
-    setLoading(false);
-  }
-
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
       {isNew && (
-        <div className="rounded-2xl bg-neutral-900 text-white px-6 py-5 mb-8 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-1">
-              Your profile is ready
-            </p>
-            <p className="text-sm text-neutral-200 leading-relaxed">
-              This is your personalized beauty guide — built around your coloring,
-              your products, and how you like to wear makeup. Come back anytime to refine it.
-            </p>
+        <div className="rounded-2xl bg-neutral-900 text-white p-6 mb-8">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-2">
+                Your profile is ready
+              </p>
+              <p className="text-sm text-neutral-300 leading-relaxed max-w-md">
+                This is your personalized beauty guide — built around your coloring, your products, and how you like to wear makeup. Come back anytime to refine it.
+              </p>
+            </div>
+            <Link
+              href="/dashboard"
+              className="text-xs text-neutral-500 hover:text-white transition-colors whitespace-nowrap shrink-0"
+            >
+              Dashboard →
+            </Link>
           </div>
-          <Link href="/dashboard" className="text-xs text-neutral-400 hover:text-white whitespace-nowrap mt-0.5">
-            Go to dashboard →
-          </Link>
         </div>
       )}
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-semibold tracking-tight">Dossier</h1>
-          <p className="mt-3 text-neutral-600">Generate a personalized style dossier from your intake, inventory, and refinement notes.</p>
+      {initialLoading ? (
+        <p className="text-sm text-neutral-500">Loading…</p>
+      ) : dossier ? (
+        <DossierRenderer dossier={dossier.content} />
+      ) : (
+        <div className="rounded-3xl border bg-white p-8 text-neutral-600 shadow-sm">
+          No dossier yet. <Link href="/intake" className="underline">Complete your intake</Link> to generate one.
         </div>
-        <button onClick={generateDossier} disabled={loading} className="rounded-2xl bg-black px-5 py-3 text-white disabled:opacity-50">
-          {loading ? 'Generating...' : 'Generate dossier'}
-        </button>
-      </div>
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-      <div className="mt-8">
-        {initialLoading ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
-        ) : dossier ? (
-          <DossierRenderer dossier={dossier.content} />
-        ) : (
-          <div className="rounded-3xl border bg-white p-8 text-neutral-600 shadow-sm">
-            No dossier yet. Save your intake first, then generate one here.
-          </div>
-        )}
-      </div>
+      )}
     </main>
   );
 }
