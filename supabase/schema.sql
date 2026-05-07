@@ -24,9 +24,29 @@ create table if not exists intake_profiles (
   jewelry_preference text,
   wardrobe_colors text,
   notes text,
+  ai_summary text,
+  makeup_experience text,
+  makeup_issues text[],
+  goal_notes text,
+  products_list text,
+  struggle_categories text[],
+  desired_feeling text[],
+  target_situations text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- For existing databases, run the following ALTER TABLE statements
+-- in the Supabase SQL editor to add the new columns:
+--
+-- alter table intake_profiles add column if not exists ai_summary text;
+-- alter table intake_profiles add column if not exists makeup_experience text;
+-- alter table intake_profiles add column if not exists makeup_issues text[];
+-- alter table intake_profiles add column if not exists goal_notes text;
+-- alter table intake_profiles add column if not exists products_list text;
+-- alter table intake_profiles add column if not exists struggle_categories text[];
+-- alter table intake_profiles add column if not exists desired_feeling text[];
+-- alter table intake_profiles add column if not exists target_situations text;
 
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),

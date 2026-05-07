@@ -3,9 +3,9 @@ import { z } from 'zod';
 export const intakeSchema = z.object({
   age_range: z.string().min(1),
   complexion_depth: z.string().min(1),
-  undertone: z.string().min(1),
+  undertone: z.string().optional().default('neutral'),
   overtone: z.string().optional().default(''),
-  contrast_level: z.string().min(1),
+  contrast_level: z.string().optional().default(''),
   eye_color: z.string().optional().default(''),
   hair_color: z.string().optional().default(''),
   goals: z.array(z.string()).default([]),
@@ -14,7 +14,15 @@ export const intakeSchema = z.object({
   preferred_style: z.array(z.string()).default([]),
   jewelry_preference: z.string().optional().default(''),
   wardrobe_colors: z.string().optional().default(''),
-  notes: z.string().optional().default('')
+  notes: z.string().optional().default(''),
+  ai_summary: z.string().optional().default(''),
+  makeup_experience: z.string().optional().default(''),
+  makeup_issues: z.array(z.string()).optional().default([]),
+  goal_notes: z.string().optional().default(''),
+  products_list: z.string().optional().default(''),
+  struggle_categories: z.array(z.string()).optional().default([]),
+  desired_feeling: z.array(z.string()).optional().default([]),
+  target_situations: z.string().optional().default('')
 });
 
 export const inventorySchema = z.object({
