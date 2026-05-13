@@ -15,12 +15,6 @@ export default function HomePage() {
             MAYA
           </div>
         </div>
-        <p
-          className="mb-4 text-sm uppercase tracking-[0.2em]"
-          style={{ color: 'rgba(255,255,255,0.5)' }}
-        >
-          Beauty, Style, and Harmony
-        </p>
         <h1
           className="text-2xl sm:text-3xl font-semibold tracking-tight"
           style={{ color: 'rgba(255,255,255,0.97)' }}
