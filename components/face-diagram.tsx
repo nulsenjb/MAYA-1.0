@@ -64,7 +64,7 @@ export function FaceDiagram() {
             onClick={() => setZone(z)}
             className={`rounded-xl border px-4 py-2 text-xs font-semibold transition-all ${
               zone === z
-                ? 'bg-neutral-900 text-white border-neutral-900'
+                ? 'bg-brand text-white border-brand'
                 : 'bg-white text-neutral-500 border-neutral-200'
             }`}
           >

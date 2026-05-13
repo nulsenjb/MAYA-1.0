@@ -11,6 +11,9 @@
  * alter table intake_profiles add column if not exists struggle_categories text[];
  * alter table intake_profiles add column if not exists desired_feeling text[];
  * alter table intake_profiles add column if not exists target_situations text;
+ * -- ALTER TABLE intake_profiles ADD COLUMN IF NOT EXISTS face_forehead text;
+ * -- ALTER TABLE intake_profiles ADD COLUMN IF NOT EXISTS face_length text;
+ * -- ALTER TABLE intake_profiles ADD COLUMN IF NOT EXISTS face_jaw text;
  */
 
 import { ChangeEvent, ReactNode, useEffect, useState } from 'react';
@@ -33,6 +36,22 @@ const DEPTH_OPTIONS = [
   'Medium',
   'Medium-deep',
   'Deep',
+];
+const FACE_FOREHEAD_OPTIONS = [
+  'Forehead is wider',
+  "They're about the same width",
+  'Jawline is wider',
+];
+const FACE_LENGTH_OPTIONS = [
+  'My face is longer than it is wide',
+  'My face is roughly as long as it is wide',
+  'My face is wider than it is long',
+];
+const FACE_JAW_OPTIONS = [
+  'Soft and rounded',
+  'Defined and angular',
+  'Pointed at the chin',
+  'Not sure',
 ];
 const EXPERIENCE_OPTIONS = [
   'Makeup usually looks great on me',
@@ -80,20 +99,18 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-function mapAiDepth(aiDepth: string): string {
-  const normalized = aiDepth.toLowerCase().trim();
-  return DEPTH_OPTIONS.find((opt) => opt.toLowerCase() === normalized) ?? '';
-}
-
 export default function IntakePage() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
   const [showCompletion, setShowCompletion] = useState(false);
 
   const [ageRange, setAgeRange] = useState('');
   const [hairColor, setHairColor] = useState('');
   const [eyeColor, setEyeColor] = useState('');
   const [complexionDepth, setComplexionDepth] = useState('');
+  const [faceForehead, setFaceForehead] = useState('');
+  const [faceLength, setFaceLength] = useState('');
+  const [faceJaw, setFaceJaw] = useState('');
 
   const [makeupExperience, setMakeupExperience] = useState('');
   const [makeupIssues, setMakeupIssues] = useState<string[]>([]);
@@ -107,7 +124,6 @@ export default function IntakePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [isAdjusting, setIsAdjusting] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [desiredFeeling, setDesiredFeeling] = useState<string[]>([]);
@@ -146,7 +162,6 @@ export default function IntakePage() {
     setPhotos(merged);
     setPhotoPreviews(merged.map((f) => URL.createObjectURL(f)));
     setAnalysisResult(null);
-    setIsAdjusting(false);
   }
 
   function removePhoto(idx: number) {
@@ -155,7 +170,6 @@ export default function IntakePage() {
     setPhotos(next);
     setPhotoPreviews(next.map((f) => URL.createObjectURL(f)));
     setAnalysisResult(null);
-    setIsAdjusting(false);
   }
 
   async function analyzePhotos() {
@@ -180,25 +194,12 @@ export default function IntakePage() {
     }
   }
 
-  function updateAnalysisField(field: keyof AnalysisResult, value: string) {
-    if (!analysisResult) return;
-    setAnalysisResult({ ...analysisResult, [field]: value });
-  }
-
-  function confirmAndAdvance() {
-    if (!analysisResult) return;
-    setIsAdjusting(false);
-    setHairColor(analysisResult.hairColor);
-    setEyeColor(analysisResult.eyeColor);
-    const mappedDepth = mapAiDepth(analysisResult.depth);
-    if (mappedDepth) setComplexionDepth(mappedDepth);
-    setCurrentStep(1);
-    window.scrollTo({ top: 0 });
+  function finishWithPhoto() {
+    setShowCompletion(true);
   }
 
   function skipPhoto() {
-    setCurrentStep(1);
-    window.scrollTo({ top: 0 });
+    setShowCompletion(true);
   }
 
   function canProceed(): boolean {
@@ -217,17 +218,14 @@ export default function IntakePage() {
   }
 
   function next() {
+    if (currentStep === 5) return;
     if (!canProceed()) return;
-    if (currentStep === 4) {
-      setShowCompletion(true);
-    } else {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0 });
-    }
+    setCurrentStep(currentStep + 1);
+    window.scrollTo({ top: 0 });
   }
 
   function back() {
-    if (currentStep > 0) {
+    if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       window.scrollTo({ top: 0 });
     }
@@ -241,6 +239,9 @@ export default function IntakePage() {
       hair_color: hairColor,
       eye_color: eyeColor,
       complexion_depth: complexionDepth,
+      face_forehead: faceForehead,
+      face_length: faceLength,
+      face_jaw: faceJaw,
       undertone: analysisResult?.undertone || 'neutral',
       ai_summary: analysisResult?.summary || '',
       makeup_experience: makeupExperience,
@@ -285,10 +286,10 @@ export default function IntakePage() {
           Building your profile…
         </h1>
         <p className="text-sm text-neutral-500 leading-relaxed max-w-sm">
-          Maya is analyzing your coloring and creating your personalized beauty guide. This takes about 20 seconds.
+          Maya is putting everything together. Your personalized beauty guide will be ready in just a moment.
         </p>
         <div className="mt-8 w-48 h-0.5 bg-neutral-100 rounded-full overflow-hidden">
-          <div className="h-full bg-neutral-900 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+          <div className="h-full bg-[#D4A090] rounded-full animate-pulse" style={{ width: '70%' }}></div>
         </div>
       </div>
     );
@@ -306,7 +307,7 @@ export default function IntakePage() {
         <button
           onClick={save}
           disabled={isSaving}
-          className="rounded-xl bg-neutral-900 text-white px-8 py-3.5 text-sm font-semibold hover:bg-neutral-700 transition-colors disabled:opacity-40"
+          className="rounded-xl bg-brand text-white px-8 py-3.5 text-sm font-semibold hover:bg-[#C08878] transition-colors disabled:opacity-40"
         >
           {isSaving ? 'Saving…' : 'See your dashboard →'}
         </button>
@@ -315,26 +316,32 @@ export default function IntakePage() {
     );
   }
 
-  if (currentStep === 0) {
+  if (currentStep === 5) {
     return (
       <div className="min-h-screen bg-neutral-50">
+        <div className="w-full bg-neutral-100 h-0.5">
+          <div
+            className="bg-brand h-0.5 transition-all duration-500"
+            style={{ width: '100%' }}
+          />
+        </div>
         <div className="min-h-screen flex flex-col px-6 py-10 max-w-xl mx-auto w-full">
+          <button
+            type="button"
+            onClick={back}
+            className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors self-start mb-4"
+          >
+            ← Back
+          </button>
           <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-3">
-            Step 1 of 5 · Photo
+            Step 5 of 5 · Photo
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 mb-3">
-            Let&apos;s start with your photo.
+            Add a photo to sharpen your results.
           </h1>
           <p className="text-sm text-neutral-500 leading-relaxed mb-8">
-            Maya uses your photo to analyze your undertone, skin depth, hair color, and eye color — so every recommendation is built around how you actually look, not a generalized type.
+            Maya uses your photo to fine-tune your undertone and depth analysis — then immediately discards it. We never store your image. Only the insights stay.
           </p>
-
-          <div className="rounded-2xl border border-neutral-200 bg-white p-5 mb-6">
-            <h2 className="text-sm font-semibold text-neutral-800 mb-3">Your privacy, simply put.</h2>
-            <TrustRow icon="🔒" text="Your photo is never stored. Maya analyzes it and immediately discards it — we only keep the results." />
-            <TrustRow icon="✦" text="Analysis happens privately. Your image is processed by OpenAI's vision API under strict data handling policies." />
-            <TrustRow icon="◎" text="You're always in control. Review and adjust any result before moving on." />
-          </div>
 
           {photos.length === 0 ? (
             <>
@@ -344,14 +351,14 @@ export default function IntakePage() {
                 <Step0GuidanceCard icon="◎" label="Minimal makeup" desc="Bare face preferred" />
               </div>
 
-              <div className="flex gap-3 w-full mb-4">
-                <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
+              <div className="flex gap-3 w-full mb-2">
+                <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-brand transition-colors">
                   <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
                   <span className="text-2xl">📷</span>
                   <span className="text-sm font-medium text-neutral-700">Take photo</span>
                   <span className="text-xs text-neutral-400">Use your camera</span>
                 </label>
-                <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-neutral-400 transition-colors">
+                <label className="flex-1 flex flex-col items-center justify-center gap-2 border border-neutral-200 rounded-xl p-5 bg-white cursor-pointer hover:border-brand transition-colors">
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                   <span className="text-2xl">🖼</span>
                   <span className="text-sm font-medium text-neutral-700">Upload photo</span>
@@ -359,14 +366,19 @@ export default function IntakePage() {
                 </label>
               </div>
 
-              <p className="text-xs text-neutral-400 text-center mb-4">JPEG or PNG · Up to 10MB</p>
+              <p className="text-xs text-neutral-400 text-center mt-3 leading-relaxed">
+                🔒 Your photo is analyzed privately and never stored.
+                Maya only keeps the color and feature insights — not the image.
+              </p>
+
+              <p className="text-xs text-neutral-400 text-center mt-4 mb-4">JPEG or PNG · Up to 10MB</p>
 
               <button
                 type="button"
                 onClick={skipPhoto}
                 className="text-xs text-neutral-400 underline cursor-pointer text-center block w-full"
               >
-                Skip for now, I&apos;ll answer manually
+                Skip and finish →
               </button>
             </>
           ) : (
@@ -388,24 +400,29 @@ export default function IntakePage() {
                 ))}
               </div>
 
-              {photos.length < MAX_PHOTOS && (
+              {photos.length < MAX_PHOTOS && !analysisResult && (
                 <>
                   <p className="text-sm text-neutral-500 text-center mt-4 mb-2">
                     Want to add more angles?
                   </p>
-                  <label className="block w-full text-center cursor-pointer rounded-xl border border-neutral-200 bg-white py-3 text-sm text-neutral-700 hover:border-neutral-400 transition-colors">
+                  <label className="block w-full text-center cursor-pointer rounded-xl border border-neutral-200 bg-white py-3 text-sm text-neutral-700 hover:border-brand transition-colors">
                     <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                     + Add another photo
                   </label>
                 </>
               )}
 
+              <p className="text-xs text-neutral-400 text-center mt-4 leading-relaxed">
+                🔒 Your photo is analyzed privately and never stored.
+                Maya only keeps the color and feature insights — not the image.
+              </p>
+
               {!analysisResult && (
                 <button
                   type="button"
                   onClick={analyzePhotos}
                   disabled={isAnalyzing}
-                  className={`w-full rounded-xl bg-neutral-900 text-white py-3.5 text-sm font-semibold mt-6 hover:bg-neutral-700 transition-colors disabled:opacity-60 ${
+                  className={`w-full rounded-xl bg-brand text-white py-3.5 text-sm font-semibold mt-6 hover:bg-[#C08878] transition-colors disabled:opacity-60 ${
                     isAnalyzing ? 'animate-pulse' : ''
                   }`}
                 >
@@ -418,55 +435,28 @@ export default function IntakePage() {
               )}
 
               {analysisResult && (
-                <div className="rounded-2xl border border-neutral-200 bg-white p-6 mt-6">
-                  <div className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
-                    Maya&apos;s analysis
-                  </div>
-                  {!isAdjusting ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      <ResultField label="Undertone" value={analysisResult.undertone} />
-                      <ResultField label="Depth" value={analysisResult.depth} />
-                      <ResultField label="Hair color" value={analysisResult.hairColor} />
-                      <ResultField label="Eye color" value={analysisResult.eyeColor} />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      <AdjustField label="Undertone" value={analysisResult.undertone} onChange={(v) => updateAnalysisField('undertone', v)} />
-                      <AdjustField label="Depth" value={analysisResult.depth} onChange={(v) => updateAnalysisField('depth', v)} />
-                      <AdjustField label="Hair color" value={analysisResult.hairColor} onChange={(v) => updateAnalysisField('hairColor', v)} />
-                      <AdjustField label="Eye color" value={analysisResult.eyeColor} onChange={(v) => updateAnalysisField('eyeColor', v)} />
-                    </div>
-                  )}
-                  <p className="text-xs text-neutral-500 leading-relaxed mt-4 pt-4 border-t border-neutral-100">
-                    {analysisResult.summary}
+                <div className="rounded-2xl border border-neutral-200 bg-white p-6 mt-6 text-center">
+                  <p className="text-sm font-medium text-neutral-800">
+                    Photo analyzed — your results are included in your dossier.
                   </p>
+                  <button
+                    type="button"
+                    onClick={finishWithPhoto}
+                    className="w-full rounded-xl bg-brand text-white py-3 text-sm font-semibold mt-5 hover:bg-[#C08878] transition-colors"
+                  >
+                    Continue
+                  </button>
                 </div>
               )}
 
-              {analysisResult && (
-                <div className="mt-5">
-                  <p className="text-sm font-semibold text-neutral-800 text-center mb-3">
-                    Does this feel accurate?
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={confirmAndAdvance}
-                      className="flex-1 rounded-xl bg-neutral-900 text-white py-3 text-sm font-semibold hover:bg-neutral-700 transition-colors"
-                    >
-                      {isAdjusting ? 'Save changes' : 'Yes, looks right'}
-                    </button>
-                    {!isAdjusting && (
-                      <button
-                        type="button"
-                        onClick={() => setIsAdjusting(true)}
-                        className="flex-1 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-800 hover:border-neutral-400 transition-colors"
-                      >
-                        Let me adjust
-                      </button>
-                    )}
-                  </div>
-                </div>
+              {!analysisResult && (
+                <button
+                  type="button"
+                  onClick={skipPhoto}
+                  className="text-xs text-neutral-400 underline cursor-pointer text-center block w-full mt-6"
+                >
+                  Skip and finish →
+                </button>
               )}
             </>
           )}
@@ -483,8 +473,8 @@ export default function IntakePage() {
     <div className="min-h-screen bg-neutral-50 flex flex-col">
       <div className="w-full bg-neutral-100 h-0.5">
         <div
-          className="bg-neutral-900 h-0.5 transition-all duration-500"
-          style={{ width: `${(currentStep / 4) * 100}%` }}
+          className="bg-brand h-0.5 transition-all duration-500"
+          style={{ width: `${(currentStep / 5) * 100}%` }}
         />
       </div>
 
@@ -492,7 +482,7 @@ export default function IntakePage() {
         {currentStep === 1 && (
           <>
             <SectionHeader
-              stepNum={2}
+              stepNum={1}
               title="About you."
               subtitle="Let's start with the basics — this is the foundation everything else builds on."
             />
@@ -510,12 +500,12 @@ export default function IntakePage() {
             </Question>
             <Question
               label="How would you describe your natural hair color?"
-              hint="Examples: medium brown, dark blonde, gray blended"
+              hint="Be as specific as you like — the more detail, the better Maya can match tones."
             >
               <TextInput
                 value={hairColor}
                 onChange={setHairColor}
-                placeholder="e.g. medium brown with highlights"
+                placeholder="e.g. medium brown with golden highlights, silver-blended dark brown, strawberry blonde"
               />
             </Question>
             <Question label="How would you describe your eye color?">
@@ -537,13 +527,58 @@ export default function IntakePage() {
                 ))}
               </div>
             </Question>
+
+            <div className="mb-8">
+              <p className="text-sm font-semibold text-neutral-800 mb-2">
+                A few quick questions to help us understand your face shape.
+              </p>
+              <p className="text-xs text-neutral-400 mb-6 leading-relaxed">
+                Face shape affects placement techniques — this helps Maya build the right application map for you.
+              </p>
+              <SubQuestion label="How does your forehead compare to your jawline?">
+                <div className="grid grid-cols-1 gap-2">
+                  {FACE_FOREHEAD_OPTIONS.map((opt) => (
+                    <ChoiceOption
+                      key={opt}
+                      label={opt}
+                      selected={faceForehead === opt}
+                      onClick={() => setFaceForehead(opt)}
+                    />
+                  ))}
+                </div>
+              </SubQuestion>
+              <SubQuestion label="How would you describe your face length?">
+                <div className="grid grid-cols-1 gap-2">
+                  {FACE_LENGTH_OPTIONS.map((opt) => (
+                    <ChoiceOption
+                      key={opt}
+                      label={opt}
+                      selected={faceLength === opt}
+                      onClick={() => setFaceLength(opt)}
+                    />
+                  ))}
+                </div>
+              </SubQuestion>
+              <SubQuestion label="How would you describe your jawline?">
+                <div className="grid grid-cols-1 gap-2">
+                  {FACE_JAW_OPTIONS.map((opt) => (
+                    <ChoiceOption
+                      key={opt}
+                      label={opt}
+                      selected={faceJaw === opt}
+                      onClick={() => setFaceJaw(opt)}
+                    />
+                  ))}
+                </div>
+              </SubQuestion>
+            </div>
           </>
         )}
 
         {currentStep === 2 && (
           <>
             <SectionHeader
-              stepNum={3}
+              stepNum={2}
               title="Your makeup experience."
               subtitle="This part matters as much as anything else. Be honest — there are no wrong answers."
             />
@@ -590,7 +625,7 @@ export default function IntakePage() {
         {currentStep === 3 && (
           <>
             <SectionHeader
-              stepNum={4}
+              stepNum={3}
               title="Your products."
               subtitle="Start simple. We'll build from here."
             />
@@ -628,7 +663,7 @@ export default function IntakePage() {
         {currentStep === 4 && (
           <>
             <SectionHeader
-              stepNum={5}
+              stepNum={4}
               title="Your style."
               subtitle="Almost done. This shapes how Maya builds your looks."
             />
@@ -668,7 +703,8 @@ export default function IntakePage() {
           <button
             type="button"
             onClick={back}
-            className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+            disabled={currentStep === 1}
+            className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors disabled:opacity-30"
           >
             Back
           </button>
@@ -676,9 +712,9 @@ export default function IntakePage() {
             type="button"
             onClick={next}
             disabled={!canProceed()}
-            className="rounded-xl bg-neutral-900 text-white px-6 py-3 text-sm font-semibold hover:bg-neutral-700 transition-colors disabled:opacity-40"
+            className="rounded-xl bg-brand text-white px-6 py-3 text-sm font-semibold hover:bg-[#C08878] transition-colors disabled:opacity-40"
           >
-            {currentStep === 4 ? 'Finish' : 'Next'}
+            Next
           </button>
         </div>
       </div>
@@ -724,6 +760,21 @@ function Question({
   );
 }
 
+function SubQuestion({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mb-5 last:mb-0">
+      <p className="text-sm font-medium text-neutral-700 mb-2">{label}</p>
+      {children}
+    </div>
+  );
+}
+
 function ChoiceOption({
   label,
   selected,
@@ -739,8 +790,8 @@ function ChoiceOption({
       onClick={onClick}
       className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors text-left text-sm ${
         selected
-          ? 'border-neutral-900 bg-neutral-900 text-white'
-          : 'border-neutral-200 bg-white text-neutral-900 hover:border-neutral-400'
+          ? 'border-brand bg-brand text-white'
+          : 'border-neutral-200 bg-white text-neutral-900 hover:border-brand'
       }`}
     >
       {label}
@@ -763,7 +814,7 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-neutral-400 transition-colors"
+      className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-brand transition-colors"
     />
   );
 }
@@ -785,17 +836,8 @@ function Textarea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-neutral-400 transition-colors resize-none"
+      className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-brand transition-colors resize-none"
     />
-  );
-}
-
-function TrustRow({ icon, text }: { icon: string; text: string }) {
-  return (
-    <div className="flex items-start gap-3 mb-2 last:mb-0">
-      <span className="text-base shrink-0">{icon}</span>
-      <p className="text-xs text-neutral-500 leading-relaxed">{text}</p>
-    </div>
   );
 }
 
@@ -813,37 +855,6 @@ function Step0GuidanceCard({
       <div className="text-lg mb-1">{icon}</div>
       <div className="text-xs font-semibold text-neutral-800">{label}</div>
       <div className="text-[11px] text-neutral-500">{desc}</div>
-    </div>
-  );
-}
-
-function ResultField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-neutral-400">{label}</span>
-      <span className="text-sm font-semibold text-neutral-900">{value}</span>
-    </div>
-  );
-}
-
-function AdjustField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-xs text-neutral-400">{label}</span>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400 transition-colors"
-      />
     </div>
   );
 }

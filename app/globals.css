@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand: #D4A090;
+  --brand-deep: #7A4030;
+  --brand-text: rgba(255,255,255,0.97);
+  --brand-text-mid: rgba(255,255,255,0.65);
+  --brand-text-muted: rgba(255,255,255,0.4);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -17,3 +25,8 @@ body {
 }
 * { box-sizing: border-box; }
 a { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

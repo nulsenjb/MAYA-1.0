@@ -63,7 +63,7 @@ export function OutfitPicker({ onLookSelect }: Props) {
                 <button
                   key={look}
                   onClick={() => onLookSelect?.(look)}
-                  className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-neutral-900 hover:text-white transition-colors"
+                  className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-brand hover:text-white transition-colors"
                 >
                   {look}
                 </button>

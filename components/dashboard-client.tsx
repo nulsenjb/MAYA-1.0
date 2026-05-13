@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowUp } from 'lucide-react';
+import { useVoiceInput } from '@/lib/voice-input';
 
 const profileBullets = [
   {
@@ -128,7 +129,7 @@ function ProfileBuilderCard() {
 
         <Link
           href="/intake"
-          className="block text-center mt-6 w-full rounded-xl bg-neutral-900 text-white py-3.5 text-sm font-semibold hover:bg-neutral-700 transition-colors"
+          className="block text-center mt-6 w-full rounded-xl bg-brand text-white py-3.5 text-sm font-semibold hover:bg-[#C08878] transition-colors"
         >
           Begin your intake →
         </Link>
@@ -159,6 +160,15 @@ function ChatHero({
   const heading = firstName
     ? `What are we creating today, ${firstName}?`
     : 'What are we creating today?';
+  const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
+  const { isListening, toggleVoice } = useVoiceInput((t) => setInput(input + t));
+
+  function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAttachedPhoto(file.name);
+  }
 
   return (
     <div className="rounded-2xl border bg-white overflow-hidden mb-4">
@@ -168,7 +178,11 @@ function ChatHero({
           Tell Maya what you&apos;re going for and get a look built around your coloring.
         </p>
 
-        <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 focus-within:border-neutral-400 focus-within:shadow-sm transition-all">
+        {attachedPhoto && (
+          <p className="text-xs text-neutral-500 mb-2">📎 {attachedPhoto}</p>
+        )}
+
+        <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 focus-within:border-brand focus-within:shadow-sm transition-all">
           <input
             ref={inputRef}
             className="flex-1 bg-transparent border-none outline-none text-sm text-neutral-900 placeholder-neutral-400"
@@ -177,10 +191,22 @@ function ChatHero({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
           />
+          <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors shrink-0">
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
+            <span className="text-lg">📷</span>
+          </label>
+          <button
+            type="button"
+            onClick={toggleVoice}
+            className={`text-lg shrink-0 transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
+            aria-label="Voice input"
+          >
+            🎙
+          </button>
           <button
             onClick={send}
             aria-label="Send"
-            className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:opacity-80 active:scale-95 transition-all shrink-0"
+            className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center hover:bg-[#C08878] active:scale-95 transition-all shrink-0"
           >
             <ArrowUp size={16} strokeWidth={2.5} />
           </button>

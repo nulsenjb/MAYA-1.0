@@ -57,7 +57,7 @@ export default async function LooksPage() {
           </p>
           <Link
             href="/dossier"
-            className="rounded-xl bg-neutral-900 text-white px-5 py-2.5 text-sm font-semibold hover:bg-neutral-700 transition-colors"
+            className="rounded-xl bg-brand text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#C08878] transition-colors"
           >
             Browse your dossier →
           </Link>

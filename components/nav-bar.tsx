@@ -25,14 +25,23 @@ export function NavBar() {
 
   return (
     <>
-      <header className="border-b border-neutral-200 bg-white/90 backdrop-blur">
+      <header
+        className="bg-[#D4A090] backdrop-blur"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}
+      >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/">
-            <span className="text-base font-light tracking-[0.18em] uppercase text-neutral-900">
+            <span
+              className="text-base font-light tracking-[0.18em] uppercase"
+              style={{ color: 'rgba(255,255,255,0.9)' }}
+            >
               MAYA
             </span>
           </Link>
-          <nav className="hidden md:flex flex-wrap items-center gap-4 text-sm text-neutral-600">
+          <nav
+            className="hidden md:flex flex-wrap items-center gap-4 text-sm"
+            style={{ color: 'rgba(255,255,255,0.85)' }}
+          >
             <Link href="/profile">Profile</Link>
             <Link href="/inventory">My Stash</Link>
             <Link href="/refine">Refine</Link>
@@ -43,8 +52,11 @@ export function NavBar() {
       </header>
 
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex md:hidden items-center justify-around px-2 pt-2 pb-3"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-[#D4A090] backdrop-blur-sm flex md:hidden items-center justify-around px-2 pt-2 pb-3"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom, 12px)',
+          borderTop: '1px solid rgba(255,255,255,0.15)',
+        }}
       >
         {TABS.map((tab) => {
           const active = pathname === tab.href;
@@ -55,19 +67,18 @@ export function NavBar() {
               className="flex flex-col items-center gap-1 flex-1 py-1"
             >
               <div
-                className={`w-1 h-1 rounded-full mb-0.5 ${
-                  active ? 'bg-neutral-900' : 'bg-transparent'
-                }`}
+                className="w-1 h-1 rounded-full mb-0.5"
+                style={{ backgroundColor: active ? 'rgba(255,255,255,0.97)' : 'transparent' }}
               />
               <span
-                className={`text-xl ${active ? 'text-neutral-900' : 'text-neutral-400'}`}
+                className="text-xl"
+                style={{ color: active ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.45)' }}
               >
                 {tab.icon}
               </span>
               <span
-                className={`text-[10px] font-medium ${
-                  active ? 'text-neutral-900' : 'text-neutral-400'
-                }`}
+                className="text-[10px] font-medium"
+                style={{ color: active ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.45)' }}
               >
                 {tab.label}
               </span>
@@ -80,8 +91,10 @@ export function NavBar() {
           className="flex flex-col items-center gap-1 flex-1 py-1"
         >
           <div className="w-1 h-1 rounded-full mb-0.5 bg-transparent" />
-          <span className="text-xl text-neutral-300">→</span>
-          <span className="text-[10px] font-medium text-neutral-400">Sign out</span>
+          <span className="text-xl" style={{ color: 'rgba(255,255,255,0.45)' }}>→</span>
+          <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            Sign out
+          </span>
         </button>
       </div>
     </>

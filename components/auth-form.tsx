@@ -52,7 +52,7 @@ export function AuthForm({ mode, successRedirect = '/dashboard' }: Props) {
         </p>
         <Link
           href="/auth/login"
-          className="mt-6 inline-block rounded-2xl bg-black px-6 py-3 text-sm text-white"
+          className="mt-6 inline-block rounded-2xl bg-brand px-6 py-3 text-sm text-white hover:bg-[#C08878] transition-colors"
         >
           Log in →
         </Link>
@@ -73,14 +73,14 @@ export function AuthForm({ mode, successRedirect = '/dashboard' }: Props) {
 
       <div className="mt-6 grid gap-4">
         <input
-          className="rounded-2xl border border-neutral-200 p-3 text-sm focus:border-black focus:outline-none"
+          className="rounded-2xl border border-neutral-200 p-3 text-sm focus:border-brand focus:outline-none"
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
         />
-        <div className="relative flex items-center rounded-2xl border border-neutral-200 px-3 focus-within:border-black transition-colors">
+        <div className="relative flex items-center rounded-2xl border border-neutral-200 px-3 focus-within:border-brand transition-colors">
           <input
             className="flex-1 bg-transparent border-none outline-none py-3 text-sm"
             type={showPassword ? 'text' : 'password'}
@@ -100,7 +100,7 @@ export function AuthForm({ mode, successRedirect = '/dashboard' }: Props) {
         <button
           onClick={handleSubmit}
           disabled={loading || !email || !password}
-          className="rounded-2xl bg-black px-5 py-3 text-sm text-white disabled:opacity-50"
+          className="rounded-2xl bg-brand px-5 py-3 text-sm text-white hover:bg-[#C08878] disabled:opacity-50 transition-colors"
         >
           {loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
         </button>

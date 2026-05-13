@@ -75,8 +75,8 @@ export default async function VideosPage() {
             key={cat}
             className={`rounded-xl border px-4 py-2 text-xs font-semibold transition-colors ${
               i === 0
-                ? 'border-neutral-900 bg-neutral-900 text-white'
-                : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-400'
+                ? 'border-brand bg-brand text-white'
+                : 'border-neutral-200 bg-white text-neutral-600 hover:border-brand'
             }`}
           >
             {cat}
@@ -116,13 +116,13 @@ export default async function VideosPage() {
           {voteTopics.map((topic) => (
             <button
               key={topic}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-semibold text-neutral-700 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors"
+              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-semibold text-neutral-700 hover:border-brand hover:bg-brand hover:text-white transition-colors"
             >
               {topic}
             </button>
           ))}
         </div>
-        <button className="rounded-2xl bg-neutral-900 px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-700 transition-colors">
+        <button className="rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-[#C08878] transition-colors">
           Submit votes
         </button>
       </div>

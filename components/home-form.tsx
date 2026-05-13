@@ -76,7 +76,7 @@ export function HomeForm() {
 
       <div className="grid gap-3">
         <input
-          className="rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-neutral-900 focus:outline-none transition-colors"
+          className="rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand focus:outline-none transition-colors"
           type="email"
           placeholder="Email"
           value={email}
@@ -84,7 +84,7 @@ export function HomeForm() {
           onKeyDown={(e) => e.key === 'Enter' && submit()}
         />
         <input
-          className="rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-neutral-900 focus:outline-none transition-colors"
+          className="rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand focus:outline-none transition-colors"
           type="password"
           placeholder="Password"
           value={password}
@@ -94,7 +94,7 @@ export function HomeForm() {
         <button
           onClick={submit}
           disabled={loading || !email || !password}
-          className="rounded-2xl bg-neutral-900 px-5 py-3 text-sm text-white disabled:opacity-40 transition-opacity"
+          className="rounded-2xl bg-brand px-5 py-3 text-sm text-white hover:bg-[#C08878] disabled:opacity-40 transition-colors"
         >
           {loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
         </button>

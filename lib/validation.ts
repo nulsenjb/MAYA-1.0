@@ -22,7 +22,10 @@ export const intakeSchema = z.object({
   products_list: z.string().optional().default(''),
   struggle_categories: z.array(z.string()).optional().default([]),
   desired_feeling: z.array(z.string()).optional().default([]),
-  target_situations: z.string().optional().default('')
+  target_situations: z.string().optional().default(''),
+  face_forehead: z.string().optional().default(''),
+  face_length: z.string().optional().default(''),
+  face_jaw: z.string().optional().default('')
 });
 
 export const inventorySchema = z.object({

@@ -62,7 +62,7 @@ export default function InventoryPage() {
               <input type="checkbox" checked={form.favorite} onChange={(e) => setForm({ ...form, favorite: e.target.checked })} />
               Mark as favorite
             </label>
-            <button onClick={addItem} className="rounded-2xl bg-black px-5 py-3 text-white">Add item</button>
+            <button onClick={addItem} className="rounded-2xl bg-brand px-5 py-3 text-white hover:bg-[#C08878] transition-colors">Add item</button>
             {message && <p className="text-sm text-neutral-600">{message}</p>}
           </div>
         </section>

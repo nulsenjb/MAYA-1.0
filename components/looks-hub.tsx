@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { useVoiceInput } from '@/lib/voice-input';
 
 const nudges = [
   'What are you wearing today?',
@@ -34,7 +35,16 @@ export function LooksHub({ profile }: { profile: Profile }) {
   const [lastSuggestedLook, setLastSuggestedLook] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState('');
   const [looks, setLooks] = useState<Look[]>([]);
+  const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { isListening, toggleVoice } = useVoiceInput((t) => setInput((p) => p + t));
+
+  function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAttachedPhoto(file.name);
+  }
 
   useEffect(() => {
     loadChat();
@@ -150,7 +160,7 @@ export function LooksHub({ profile }: { profile: Profile }) {
               <div
                 className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-7 whitespace-pre-wrap ${
                   msg.role === 'user'
-                    ? 'rounded-br-sm bg-neutral-900 text-white'
+                    ? 'rounded-br-sm bg-brand text-white'
                     : 'rounded-bl-sm bg-neutral-100 text-neutral-800'
                 }`}
               >
@@ -182,7 +192,7 @@ export function LooksHub({ profile }: { profile: Profile }) {
                 <p className="text-xs text-neutral-500">Maya built a look — want to save it?</p>
                 <button
                   onClick={saveLook}
-                  className="rounded-xl bg-neutral-900 px-4 py-2 text-xs text-white transition-opacity hover:opacity-80"
+                  className="rounded-xl bg-brand px-4 py-2 text-xs text-white hover:bg-[#C08878] transition-colors"
                 >
                   Save look
                 </button>
@@ -194,16 +204,28 @@ export function LooksHub({ profile }: { profile: Profile }) {
         {/* Input */}
         <div className="flex items-center gap-3 border-t px-5 py-4">
           <input
-            className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm transition-colors focus:border-neutral-900 focus:outline-none"
+            className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm transition-colors focus:border-brand focus:outline-none"
             placeholder={nudges[nudgeIdx]}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
           />
+          <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors shrink-0">
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
+            <span className="text-lg">📷</span>
+          </label>
+          <button
+            type="button"
+            onClick={toggleVoice}
+            className={`text-lg shrink-0 transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
+            aria-label="Voice input"
+          >
+            🎙
+          </button>
           <button
             onClick={send}
             disabled={!input.trim() || sending}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-neutral-900 text-white transition-opacity disabled:opacity-30"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-brand text-white hover:bg-[#C08878] transition-colors disabled:opacity-30"
             aria-label="Send"
           >
             <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 rotate-90">
@@ -211,6 +233,9 @@ export function LooksHub({ profile }: { profile: Profile }) {
             </svg>
           </button>
         </div>
+        {attachedPhoto && (
+          <p className="px-5 pb-3 text-xs text-neutral-500">📎 {attachedPhoto}</p>
+        )}
       </div>
 
       {/* Saved looks */}

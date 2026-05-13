@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { useVoiceInput } from '@/lib/voice-input';
 
 type Note = { id: string; note_date: string; title: string; note: string; outcome: string; };
 type Message = { id?: string; role: string; content: string; };
@@ -12,7 +13,24 @@ export default function RefinePage() {
   const [sending, setSending] = useState(false);
   const [lastSuggestedLook, setLastSuggestedLook] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState('');
+  const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
+  const [beforePhoto, setBeforePhoto] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { isListening, toggleVoice } = useVoiceInput((t) => setInput((p) => p + t));
+
+  function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAttachedPhoto(file.name);
+  }
+
+  function handleBeforePhoto(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setBeforePhoto(file.name);
+  }
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteMessage, setNoteMessage] = useState('');
   const [noteForm, setNoteForm] = useState({
@@ -137,13 +155,13 @@ export default function RefinePage() {
         <div className="flex rounded-2xl border overflow-hidden">
           <button
             onClick={() => setTab('chat')}
-            className={`px-5 py-2 text-sm transition-all ${tab === 'chat' ? 'bg-black text-white' : 'text-neutral-600 hover:bg-neutral-50'}`}
+            className={`px-5 py-2 text-sm transition-all ${tab === 'chat' ? 'bg-brand text-white' : 'text-neutral-600 hover:bg-neutral-50'}`}
           >
             Chat
           </button>
           <button
             onClick={() => setTab('notes')}
-            className={`px-5 py-2 text-sm transition-all ${tab === 'notes' ? 'bg-black text-white' : 'text-neutral-600 hover:bg-neutral-50'}`}
+            className={`px-5 py-2 text-sm transition-all ${tab === 'notes' ? 'bg-brand text-white' : 'text-neutral-600 hover:bg-neutral-50'}`}
           >
             Notes
           </button>
@@ -151,6 +169,22 @@ export default function RefinePage() {
       </div>
 
       {tab === 'chat' && (
+        <>
+        <div className="flex items-center gap-3 mb-4 p-4 bg-neutral-50 border border-neutral-100 rounded-xl">
+          <span className="text-xl">📸</span>
+          <div>
+            <p className="text-sm font-medium text-neutral-700">
+              {beforePhoto ? `Before photo: ${beforePhoto}` : 'Take a before photo'}
+            </p>
+            <p className="text-xs text-neutral-400">Document where you are now so Maya can help you track progress.</p>
+          </div>
+          <label className="ml-auto cursor-pointer">
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleBeforePhoto} />
+            <span className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5">
+              {beforePhoto ? 'Replace' : 'Add photo'}
+            </span>
+          </label>
+        </div>
         <div className="rounded-3xl border bg-white shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <p className="text-sm font-medium">Maya — your beauty advisor</p>
@@ -162,7 +196,7 @@ export default function RefinePage() {
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-7 ${
                   msg.role === 'user'
-                    ? 'bg-black text-white rounded-br-sm'
+                    ? 'bg-brand text-white rounded-br-sm'
                     : 'bg-neutral-100 text-neutral-800 rounded-bl-sm'
                 }`}>
                   {msg.content}
@@ -182,7 +216,7 @@ export default function RefinePage() {
           {lastSuggestedLook && (
             <div className="px-6 py-3 border-t bg-neutral-50 flex items-center justify-between gap-4">
               <p className="text-xs text-neutral-500">Maya suggested a look — want to save it?</p>
-              <button onClick={saveLookFromChat} className="rounded-xl bg-black px-4 py-2 text-xs text-white">
+              <button onClick={saveLookFromChat} className="rounded-xl bg-brand px-4 py-2 text-xs text-white hover:bg-[#C08878] transition-colors">
                 Save to playlist
               </button>
             </div>
@@ -194,23 +228,39 @@ export default function RefinePage() {
             </div>
           )}
 
-          <div className="border-t px-6 py-4 flex gap-3">
+          <div className="border-t px-6 py-4 flex items-center gap-3">
             <input
-              className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-black focus:outline-none"
+              className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand focus:outline-none"
               placeholder="Ask anything — what worked, what didn't, what to try next..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             />
+            <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors shrink-0">
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
+              <span className="text-lg">📷</span>
+            </label>
+            <button
+              type="button"
+              onClick={toggleVoice}
+              className={`text-lg shrink-0 transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
+              aria-label="Voice input"
+            >
+              🎙
+            </button>
             <button
               onClick={sendMessage}
               disabled={!input.trim() || sending}
-              className="rounded-2xl bg-black px-5 py-3 text-sm text-white disabled:opacity-30"
+              className="rounded-2xl bg-brand px-5 py-3 text-sm text-white hover:bg-[#C08878] transition-colors disabled:opacity-30"
             >
               Send
             </button>
           </div>
+          {attachedPhoto && (
+            <p className="px-6 pb-3 text-xs text-neutral-500">📎 {attachedPhoto}</p>
+          )}
         </div>
+        </>
       )}
 
       {tab === 'notes' && (
@@ -232,7 +282,7 @@ export default function RefinePage() {
                 value={noteForm.note}
                 onChange={(e) => setNoteForm({ ...noteForm, note: e.target.value })}
               />
-              <button className="rounded-2xl bg-black px-5 py-3 text-white" onClick={addNote}>Save note</button>
+              <button className="rounded-2xl bg-brand px-5 py-3 text-white hover:bg-[#C08878] transition-colors" onClick={addNote}>Save note</button>
               {noteMessage && <p className="text-sm text-neutral-600">{noteMessage}</p>}
             </div>
           </div>
