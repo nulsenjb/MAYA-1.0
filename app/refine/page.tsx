@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowUp } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useVoiceInput } from '@/lib/voice-input';
 
@@ -16,25 +17,12 @@ export default function RefinePage() {
   const [lastSuggestedLook, setLastSuggestedLook] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState('');
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
-  const [beforePhoto, setBeforePhoto] = useState<string | null>(null);
   const [intakeComplete, setIntakeComplete] = useState<boolean | null>(null);
   const [productCount, setProductCount] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { isListening, toggleVoice } = useVoiceInput((t) => setInput((p) => p + t));
 
-  function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setAttachedPhoto(file.name);
-  }
-
-  function handleBeforePhoto(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setBeforePhoto(file.name);
-  }
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteMessage, setNoteMessage] = useState('');
   const [noteForm, setNoteForm] = useState({
@@ -61,6 +49,13 @@ export default function RefinePage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAttachedPhoto(file.name);
+  }
 
   async function loadMessages() {
     const res = await fetch('/api/chat');
@@ -117,6 +112,7 @@ export default function RefinePage() {
       if (looksLike) setLastSuggestedLook(reply);
     }
     setSending(false);
+    inputRef.current?.focus();
   }
 
   async function saveLookFromChat() {
@@ -168,11 +164,13 @@ export default function RefinePage() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+    <main className="mx-auto max-w-3xl px-6 pt-10 pb-28 md:pb-12">
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight">Discovery</h1>
-          <p className="mt-2 text-neutral-600">Tell Maya what you&apos;re noticing — or log what worked and what didn&apos;t.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Discovery</h1>
+          <p className="mt-1 text-sm text-neutral-500">Tell Maya what you&apos;re noticing — or log what worked.</p>
         </div>
         <div className="flex rounded-2xl border overflow-hidden">
           <button
@@ -191,124 +189,123 @@ export default function RefinePage() {
       </div>
 
       {tab === 'chat' && (
-        <>
-        {intakeComplete === false && (
-          <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-5 flex items-start justify-between gap-4">
-            <p className="text-sm text-neutral-600 leading-relaxed">
-              Before Maya can really see you, it helps to get to know your coloring.
-            </p>
-            <a
-              href="/intake"
-              className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
-            >
-              Start your intake
-            </a>
-          </div>
-        )}
-        {intakeComplete === true && productCount === 0 && (
-          <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-5 flex items-start justify-between gap-4">
-            <p className="text-sm text-neutral-600 leading-relaxed">
-              Maya works best when she knows what you already own.
-            </p>
-            <a
-              href="/inventory"
-              className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
-            >
-              Add your products
-            </a>
-          </div>
-        )}
-        <div className="flex items-center gap-3 mb-4 p-4 bg-neutral-50 border border-neutral-100 rounded-xl">
-          <span className="text-xl">📸</span>
-          <div>
-            <p className="text-sm font-medium text-neutral-700">
-              {beforePhoto ? `Before photo: ${beforePhoto}` : 'Take a before photo'}
-            </p>
-            <p className="text-xs text-neutral-400">Document where you are now so Maya can help you track progress.</p>
-          </div>
-          <label className="ml-auto cursor-pointer">
-            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleBeforePhoto} />
-            <span className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5">
-              {beforePhoto ? 'Replace' : 'Add photo'}
-            </span>
-          </label>
-        </div>
-        <div className="rounded-3xl border bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b">
-            <p className="text-sm font-medium">Maya</p>
-            <button onClick={clearChat} className="text-xs text-neutral-400 underline">Clear chat</button>
-          </div>
+        <div className="flex flex-col">
 
-          <div className="h-[480px] overflow-y-auto px-6 py-6 flex flex-col gap-4">
+          {/* Nudge cards */}
+          {intakeComplete === false && (
+            <div className="mb-5 rounded-2xl border border-neutral-200 bg-white p-5 flex items-start justify-between gap-4">
+              <p className="text-sm text-neutral-600 leading-relaxed">
+                Before Maya can really see you, it helps to get to know your coloring.
+              </p>
+              <a
+                href="/intake"
+                className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+              >
+                Start your intake
+              </a>
+            </div>
+          )}
+          {intakeComplete === true && productCount === 0 && (
+            <div className="mb-5 rounded-2xl border border-neutral-200 bg-white p-5 flex items-start justify-between gap-4">
+              <p className="text-sm text-neutral-600 leading-relaxed">
+                Maya works best when she knows what you already own.
+              </p>
+              <a
+                href="/inventory"
+                className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+              >
+                Add your products
+              </a>
+            </div>
+          )}
+
+          {/* Messages */}
+          <div
+            className="flex flex-col gap-6 overflow-y-auto pb-6"
+            style={{ minHeight: '420px', maxHeight: 'calc(100vh - 360px)' }}
+          >
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-7 ${
+              <div key={i} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'assistant' && (
+                  <span className="text-[#D4A090] text-xs mt-2 shrink-0 select-none">✦</span>
+                )}
+                <div className={`max-w-[80%] text-sm leading-7 ${
                   msg.role === 'user'
-                    ? 'bg-brand text-white rounded-br-sm'
-                    : 'bg-neutral-100 text-neutral-800 rounded-bl-sm'
+                    ? 'bg-brand text-white rounded-2xl rounded-br-sm px-4 py-3'
+                    : 'text-neutral-800'
                 }`}>
                   {msg.content}
                 </div>
               </div>
             ))}
             {sending && (
-              <div className="flex justify-start">
-                <div className="bg-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 text-sm text-neutral-400">
-                  Thinking...
-                </div>
+              <div className="flex items-start gap-3 justify-start">
+                <span className="text-[#D4A090] text-xs mt-1 shrink-0 select-none">✦</span>
+                <div className="text-sm text-neutral-400 italic">Looking at this with you…</div>
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
+          {/* Save look banner */}
           {lastSuggestedLook && (
-            <div className="px-6 py-3 border-t bg-neutral-50 flex items-center justify-between gap-4">
-              <p className="text-xs text-neutral-500">Maya suggested a look — want to save it?</p>
+            <div className="mb-3 rounded-xl bg-neutral-50 border border-neutral-100 px-4 py-3 flex items-center justify-between gap-4">
+              <p className="text-xs text-neutral-500">Maya noticed a look — want to save it?</p>
               <button onClick={saveLookFromChat} className="rounded-xl bg-brand px-4 py-2 text-xs text-white hover:bg-[#C08878] transition-colors">
                 Save to playlist
               </button>
             </div>
           )}
-
           {savedMsg && (
-            <div className="px-6 py-2 bg-neutral-50 text-xs text-neutral-500 text-center border-t">
-              {savedMsg}
-            </div>
+            <p className="mb-3 text-center text-xs text-neutral-400">{savedMsg}</p>
           )}
 
-          <div className="border-t px-6 py-4 flex items-center gap-3">
+          {/* Input */}
+          <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
             <input
-              className="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand focus:outline-none"
-              placeholder="Ask anything — what worked, what didn't, what to try next..."
+              ref={inputRef}
+              className="w-full px-5 pt-4 pb-2 text-sm bg-transparent border-none outline-none placeholder-neutral-400 text-neutral-900"
+              placeholder="What are you noticing today?"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             />
-            <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors shrink-0">
-              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
-              <span className="text-lg">📷</span>
-            </label>
-            <button
-              type="button"
-              onClick={toggleVoice}
-              className={`text-lg shrink-0 transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
-              aria-label="Voice input"
-            >
-              🎙
-            </button>
-            <button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || sending}
-              className="rounded-2xl bg-brand px-5 py-3 text-sm text-white hover:bg-[#C08878] transition-colors disabled:opacity-30"
-            >
-              Send
+            <div className="flex items-center justify-between px-4 pb-3 pt-1">
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors">
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
+                  <span className="text-base">📷</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={toggleVoice}
+                  className={`text-base transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
+                  aria-label="Voice input"
+                >
+                  🎙
+                </button>
+                {attachedPhoto && (
+                  <span className="text-xs text-neutral-500 truncate max-w-[120px]">📎 {attachedPhoto}</span>
+                )}
+              </div>
+              <button
+                onClick={() => sendMessage()}
+                disabled={!input.trim() || sending}
+                aria-label="Send"
+                className="w-8 h-8 rounded-xl bg-brand text-white flex items-center justify-center hover:bg-[#C08878] active:scale-95 transition-all disabled:opacity-30 shrink-0"
+              >
+                <ArrowUp size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end mt-2 px-1">
+            <button onClick={clearChat} className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors underline">
+              Clear chat
             </button>
           </div>
-          {attachedPhoto && (
-            <p className="px-6 pb-3 text-xs text-neutral-500">📎 {attachedPhoto}</p>
-          )}
+
         </div>
-        </>
       )}
 
       {tab === 'notes' && (
