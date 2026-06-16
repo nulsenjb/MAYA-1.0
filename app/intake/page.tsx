@@ -271,10 +271,10 @@ export default function IntakePage() {
       if (dossierRes.ok) {
         router.push('/dossier?new=true');
       } else {
-        router.push('/dashboard');
+        router.push('/refine');
       }
     } catch {
-      router.push('/dashboard');
+      router.push('/refine');
     }
   }
 

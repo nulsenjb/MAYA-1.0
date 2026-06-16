@@ -21,7 +21,7 @@ export function HomeForm() {
       if (error) {
         setError(error.message);
       } else if (data.session) {
-        window.location.href = '/dashboard';
+        window.location.href = '/refine';
       } else {
         setConfirmed(true);
       }
@@ -30,7 +30,7 @@ export function HomeForm() {
       if (error) {
         setError(error.message);
       } else {
-        window.location.href = '/dashboard';
+        window.location.href = '/refine';
       }
     }
     setLoading(false);

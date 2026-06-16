@@ -9,7 +9,7 @@ type Props = {
   successRedirect?: string;
 };
 
-export function AuthForm({ mode, successRedirect = '/dashboard' }: Props) {
+export function AuthForm({ mode, successRedirect = '/refine' }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

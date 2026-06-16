@@ -6,10 +6,10 @@ import { createClient } from '@/lib/supabase-browser';
 import { SignOutButton } from '@/components/sign-out-button';
 
 const TABS = [
-  { href: '/profile', label: 'Profile', icon: '◎' },
-  { href: '/inventory', label: 'My Stash', icon: '▣' },
-  { href: '/refine', label: 'Refine', icon: '↺' },
-  { href: '/videos', label: 'Videos', icon: '▶' },
+  { href: '/refine', label: 'Discovery', icon: '✦' },
+  { href: '/inventory', label: 'My Products', icon: '▣' },
+  { href: '/dossier', label: 'Dossier', icon: '◇' },
+  { href: '/videos', label: 'Learn', icon: '▶' },
 ];
 
 export function NavBar() {
@@ -30,7 +30,7 @@ export function NavBar() {
         style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/">
+          <Link href="/refine">
             <span
               className="text-base font-light tracking-[0.18em] uppercase"
               style={{ color: 'rgba(255,255,255,0.9)' }}
@@ -42,10 +42,10 @@ export function NavBar() {
             className="hidden md:flex flex-wrap items-center gap-4 text-sm"
             style={{ color: 'rgba(255,255,255,0.85)' }}
           >
-            <Link href="/profile">Profile</Link>
-            <Link href="/inventory">My Stash</Link>
-            <Link href="/refine">Refine</Link>
-            <Link href="/videos">Videos</Link>
+            <Link href="/refine">Discovery</Link>
+            <Link href="/inventory">My Products</Link>
+            <Link href="/dossier">Dossier</Link>
+            <Link href="/videos">Learn</Link>
             <SignOutButton />
           </nav>
         </div>

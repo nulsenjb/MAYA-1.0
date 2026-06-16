@@ -59,7 +59,7 @@ function DossierContent() {
               </p>
             </div>
             <Link
-              href="/dashboard"
+              href="/refine"
               className="text-xs text-neutral-500 hover:text-white transition-colors whitespace-nowrap shrink-0"
             >
               Dashboard →
