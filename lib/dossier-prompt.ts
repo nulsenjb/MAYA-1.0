@@ -11,15 +11,16 @@ Return valid JSON only with this shape:
   "summary": "",
   "complexionGuidance": [""],
   "colorHarmony": [""],
-  "doMoreOf": [""],
-  "avoidOrAdjust": [""],
+  "doMoreOf": [{ "point": "", "why": "" }],
+  "avoidOrAdjust": [{ "point": "", "why": "" }],
   "bestJewelry": [""],
   "wardrobeGuidance": [""],
   "lookBlueprints": [
-    { "title": "", "occasion": "", "steps": [""], "pairing": "", "lipIdea": "" }
+    { "title": "", "occasion": "", "steps": [""], "pairing": "", "lipIdea": "", "why": "" }
   ]
 }
 
+Each "why" must explain the reasoning in terms of THIS user's specific undertone and contrast — for example, "because your low-contrast cool-olive features…" — in Maya's voice: observational, never a rule.
 Use the user's inventory when helpful.
 Focus on undertone harmony, contrast, blush families, complexion refinement, wardrobe pairings, jewelry, and repeatable beauty systems.
 Do not use markdown fences.

@@ -43,13 +43,18 @@ export interface RefinementNote {
   outcome: 'love' | 'good' | 'mixed' | 'fail';
 }
 
+export interface DossierItem {
+  point: string;
+  why: string;
+}
+
 export interface DossierContent {
   archetype: string;
   summary: string;
   complexionGuidance: string[];
   colorHarmony: string[];
-  doMoreOf: string[];
-  avoidOrAdjust: string[];
+  doMoreOf: Array<DossierItem | string>;
+  avoidOrAdjust: Array<DossierItem | string>;
   bestJewelry: string[];
   wardrobeGuidance: string[];
   lookBlueprints: Array<{
@@ -58,6 +63,7 @@ export interface DossierContent {
     steps: string[];
     pairing: string;
     lipIdea: string;
+    why?: string;
   }>;
 }
 

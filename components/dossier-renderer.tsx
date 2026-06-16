@@ -1,4 +1,19 @@
-import { DossierContent } from '@/lib/types';
+import { DossierContent, DossierItem } from '@/lib/types';
+import { WhyDisclosure } from '@/components/why-disclosure';
+
+function renderRationaleItem(item: DossierItem | string, fallbackKey: string) {
+  if (typeof item === 'string') {
+    return (
+      <li key={fallbackKey} className="rounded-2xl bg-neutral-50 p-4">{item}</li>
+    );
+  }
+  return (
+    <li key={item.point} className="rounded-2xl bg-neutral-50 p-4">
+      {item.point}
+      {item.why && <WhyDisclosure why={item.why} />}
+    </li>
+  );
+}
 
 export function DossierRenderer({ dossier }: { dossier: DossierContent }) {
   return (
@@ -32,17 +47,13 @@ export function DossierRenderer({ dossier }: { dossier: DossierContent }) {
         <section className="rounded-3xl border bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold">Do more of</h3>
           <ul className="mt-4 grid gap-3 text-sm text-neutral-700">
-            {dossier.doMoreOf.map((item) => (
-              <li key={item} className="rounded-2xl bg-neutral-50 p-4">{item}</li>
-            ))}
+            {dossier.doMoreOf.map((item, i) => renderRationaleItem(item, String(i)))}
           </ul>
         </section>
         <section className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold">Avoid or adjust</h3>
+          <h3 className="text-xl font-semibold">Worth easing off</h3>
           <ul className="mt-4 grid gap-3 text-sm text-neutral-700">
-            {dossier.avoidOrAdjust.map((item) => (
-              <li key={item} className="rounded-2xl bg-neutral-50 p-4">{item}</li>
-            ))}
+            {dossier.avoidOrAdjust.map((item, i) => renderRationaleItem(item, String(i)))}
           </ul>
         </section>
         <section className="rounded-3xl border bg-white p-6 shadow-sm">
@@ -83,6 +94,7 @@ export function DossierRenderer({ dossier }: { dossier: DossierContent }) {
                 <p><span className="font-semibold">Pairing:</span> {look.pairing}</p>
                 <p className="mt-2"><span className="font-semibold">Lip:</span> {look.lipIdea}</p>
               </div>
+              {look.why && <WhyDisclosure why={look.why} />}
             </article>
           ))}
         </div>
