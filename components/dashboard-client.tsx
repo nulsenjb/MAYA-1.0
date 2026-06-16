@@ -22,10 +22,12 @@ const profileBullets = [
 ];
 
 const suggestions = [
-  "I have a work event and I'm wearing…",
-  'Help me use what I already own',
-  "What's a quick everyday look for me?",
-  "I'm wearing olive green — what works with my coloring?",
+  "My makeup feels heavy lately.",
+  "My blush turns orange.",
+  "Why does this foundation look dry?",
+  "Help me understand what's not working.",
+  "I feel prettier with less makeup lately.",
+  "Help me create a look for tonight.",
 ];
 
 type Props = {
@@ -36,8 +38,8 @@ type Props = {
 
 export function DashboardClient({ intakeComplete, firstName, inventoryCount }: Props) {
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -45,10 +47,10 @@ export function DashboardClient({ intakeComplete, firstName, inventoryCount }: P
 
   function send() {
     if (!input.trim()) return;
+    const message = input.trim();
     setInput('');
-    setResponse(
-      'Complete your profile to unlock personalized look recommendations — Maya will build looks around your exact coloring and the products you already own.'
-    );
+    sessionStorage.setItem('maya_seed_message', message);
+    router.push('/refine');
   }
 
   function pickSuggestion(text: string) {
@@ -72,7 +74,6 @@ export function DashboardClient({ intakeComplete, firstName, inventoryCount }: P
         input={input}
         setInput={setInput}
         send={send}
-        response={response}
         pickSuggestion={pickSuggestion}
         inputRef={inputRef}
         firstName={firstName}
@@ -142,7 +143,6 @@ type ChatHeroProps = {
   input: string;
   setInput: (v: string) => void;
   send: () => void;
-  response: string | null;
   pickSuggestion: (text: string) => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
   firstName: string;
@@ -152,14 +152,13 @@ function ChatHero({
   input,
   setInput,
   send,
-  response,
   pickSuggestion,
   inputRef,
   firstName,
 }: ChatHeroProps) {
   const heading = firstName
-    ? `What are we creating today, ${firstName}?`
-    : 'What are we creating today?';
+    ? `What are you noticing today, ${firstName}?`
+    : 'What are you noticing today?';
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const { isListening, toggleVoice } = useVoiceInput((t) => setInput(input + t));
 
@@ -175,7 +174,7 @@ function ChatHero({
       <div className="p-7 pb-6">
         <h2 className="text-xl font-semibold tracking-tight mb-1">{heading}</h2>
         <p className="text-sm text-neutral-400 mb-6">
-          Tell Maya what you&apos;re going for and get a look built around your coloring.
+          Bring whatever&apos;s on your mind — something that hasn&apos;t been working, a look you want to figure out, or a photo. We&apos;ll make sense of it together.
         </p>
 
         {attachedPhoto && (
@@ -186,7 +185,7 @@ function ChatHero({
           <input
             ref={inputRef}
             className="flex-1 bg-transparent border-none outline-none text-sm text-neutral-900 placeholder-neutral-400"
-            placeholder="Describe your occasion, outfit, or mood…"
+            placeholder="What's on your mind — or what's not quite working?"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
@@ -213,33 +212,20 @@ function ChatHero({
         </div>
       </div>
 
-      {response && (
-        <div className="mx-7 mb-6">
-          <div className="flex items-start gap-2.5 bg-neutral-50 border border-neutral-100 rounded-xl p-3.5">
-            <div className="w-5 h-5 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-[10px] text-neutral-400">✦</span>
-            </div>
-            <p className="text-sm text-neutral-500 leading-relaxed">{response}</p>
-          </div>
-        </div>
-      )}
-
       <div className="border-t border-neutral-100" />
 
       <div className="p-5 pt-4 pb-5">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-300 mb-3">
-          Try asking
+          Start with something you&apos;ve noticed
         </p>
-        {suggestions.map((text, idx) => (
+        {suggestions.map((text) => (
           <button
             key={text}
             onClick={() => pickSuggestion(text)}
             className="w-full flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-xl text-left text-sm text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-colors group"
           >
             <span className="flex items-center gap-2.5">
-              <span className="text-[11px] text-neutral-300 tabular-nums w-3.5">
-                {idx + 1}
-              </span>
+              <span className="text-neutral-200 shrink-0">·</span>
               <span>{text}</span>
             </span>
             <span className="text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity text-base">

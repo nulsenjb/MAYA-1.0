@@ -41,7 +41,15 @@ export default function RefinePage() {
   });
 
   useEffect(() => {
-    loadMessages();
+    async function init() {
+      await loadMessages();
+      const seed = sessionStorage.getItem('maya_seed_message');
+      if (seed) {
+        sessionStorage.removeItem('maya_seed_message');
+        await sendMessage(seed);
+      }
+    }
+    init();
     loadNotes();
   }, []);
 
@@ -64,10 +72,10 @@ export default function RefinePage() {
     }
   }
 
-  async function sendMessage() {
-    if (!input.trim() || sending) return;
-    const userMessage = input.trim();
-    setInput('');
+  async function sendMessage(text?: string) {
+    const userMessage = (text ?? input).trim();
+    if (!userMessage || sending) return;
+    if (!text) setInput('');
     setSending(true);
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
