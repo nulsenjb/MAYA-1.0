@@ -6,6 +6,8 @@ import { useVoiceInput } from '@/lib/voice-input';
 type Note = { id: string; note_date: string; title: string; note: string; outcome: string; };
 type Message = { id?: string; role: string; content: string; };
 
+const GREETING = "Hi — I'm Maya. I've had a look at your profile and I'm here to think through things with you. What are you noticing?";
+
 export default function RefinePage() {
   const [tab, setTab] = useState<'chat' | 'notes'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,6 +17,8 @@ export default function RefinePage() {
   const [savedMsg, setSavedMsg] = useState('');
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const [beforePhoto, setBeforePhoto] = useState<string | null>(null);
+  const [intakeComplete, setIntakeComplete] = useState<boolean | null>(null);
+  const [productCount, setProductCount] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { isListening, toggleVoice } = useVoiceInput((t) => setInput((p) => p + t));
 
@@ -51,6 +55,7 @@ export default function RefinePage() {
     }
     init();
     loadNotes();
+    loadProfile();
   }, []);
 
   useEffect(() => {
@@ -62,13 +67,25 @@ export default function RefinePage() {
     const data = await res.json();
     if (res.ok) {
       if (data.messages.length === 0) {
-        setMessages([{
-          role: 'assistant',
-          content: "Hi! I'm Maya, your personal beauty advisor. I've reviewed your profile and dossier — feel free to ask me anything. What's on your mind today?",
-        }]);
+        setMessages([{ role: 'assistant', content: GREETING }]);
       } else {
         setMessages(data.messages);
       }
+    }
+  }
+
+  async function loadProfile() {
+    const [intakeRes, inventoryRes] = await Promise.all([
+      fetch('/api/intake'),
+      fetch('/api/inventory'),
+    ]);
+    if (intakeRes.ok) {
+      const { intake } = await intakeRes.json();
+      setIntakeComplete(Boolean(intake?.complexion_depth && intake?.age_range));
+    }
+    if (inventoryRes.ok) {
+      const { items } = await inventoryRes.json();
+      setProductCount((items ?? []).length);
     }
   }
 
@@ -119,10 +136,7 @@ export default function RefinePage() {
 
   async function clearChat() {
     await fetch('/api/chat', { method: 'DELETE' });
-    setMessages([{
-      role: 'assistant',
-      content: "Hi! I'm Maya, your personal beauty advisor. I've reviewed your profile and dossier — feel free to ask me anything. What's on your mind today?",
-    }]);
+    setMessages([{ role: 'assistant', content: GREETING }]);
     setLastSuggestedLook(null);
   }
 
@@ -157,8 +171,8 @@ export default function RefinePage() {
     <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight">Refine</h1>
-          <p className="mt-2 text-neutral-600">Chat with your beauty advisor or log what worked.</p>
+          <h1 className="text-4xl font-semibold tracking-tight">Discovery</h1>
+          <p className="mt-2 text-neutral-600">Tell Maya what you&apos;re noticing — or log what worked and what didn&apos;t.</p>
         </div>
         <div className="flex rounded-2xl border overflow-hidden">
           <button
@@ -178,6 +192,32 @@ export default function RefinePage() {
 
       {tab === 'chat' && (
         <>
+        {intakeComplete === false && (
+          <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-5 flex items-start justify-between gap-4">
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              Before Maya can really see you, it helps to get to know your coloring.
+            </p>
+            <a
+              href="/intake"
+              className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+            >
+              Start your intake
+            </a>
+          </div>
+        )}
+        {intakeComplete === true && productCount === 0 && (
+          <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-5 flex items-start justify-between gap-4">
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              Maya works best when she knows what you already own.
+            </p>
+            <a
+              href="/inventory"
+              className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+            >
+              Add your products
+            </a>
+          </div>
+        )}
         <div className="flex items-center gap-3 mb-4 p-4 bg-neutral-50 border border-neutral-100 rounded-xl">
           <span className="text-xl">📸</span>
           <div>
@@ -195,7 +235,7 @@ export default function RefinePage() {
         </div>
         <div className="rounded-3xl border bg-white shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b">
-            <p className="text-sm font-medium">Maya — your beauty advisor</p>
+            <p className="text-sm font-medium">Maya</p>
             <button onClick={clearChat} className="text-xs text-neutral-400 underline">Clear chat</button>
           </div>
 
