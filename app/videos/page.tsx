@@ -1,21 +1,21 @@
 import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 
-const categories = ['All', 'Base & Skin', 'Cheeks', 'Eyes & Brows', 'Lips', 'Full Looks', 'Mature Skin'];
+const categories = ['All', 'Why this happens', 'When it feels too harsh', 'When you disappear', 'Harmony fixes', 'What changed with age', 'Breakthrough moments'];
 
 const videos = [
-  { cat: 'Base & Skin', title: 'Why fingertips beat brushes for a natural finish', duration: '4:00' },
-  { cat: 'Cheeks', title: 'Blush placement for warm undertones', duration: '3:00' },
-  { cat: 'Cheeks', title: 'The 3-shape bronzer method', duration: '2:30' },
-  { cat: 'Eyes & Brows', title: 'Wet vs dry brush — shadow depth and diffusion', duration: '3:30' },
-  { cat: 'Eyes & Brows', title: 'Eyeliner techniques for over 40', duration: '4:00' },
-  { cat: 'Eyes & Brows', title: 'Natural brow shaping — warm coloring', duration: '2:00' },
-  { cat: 'Base & Skin', title: 'Layering base products without pilling', duration: '3:00' },
-  { cat: 'Lips', title: 'Liner + lipstick — extending wear all day', duration: '2:30' },
-  { cat: 'Full Looks', title: 'Warm Effortless — complete walkthrough', duration: '6:00' },
-  { cat: 'Full Looks', title: 'Golden Hour — evening look walkthrough', duration: '7:00' },
-  { cat: 'Mature Skin', title: 'Makeup that moves with you, not against you', duration: '5:00' },
-  { cat: 'Mature Skin', title: 'Setting and finishing for longevity', duration: '3:30' },
+  { cat: 'Why this happens', title: 'Why your blush turns orange', duration: '0:50' },
+  { cat: 'Why this happens', title: 'Why concealer makes you look tired', duration: '1:00' },
+  { cat: 'Why this happens', title: 'Why you disappear in certain colors', duration: '0:55' },
+  { cat: 'When it feels too harsh', title: 'The one-inch blush shift that softens everything', duration: '1:10' },
+  { cat: 'When it feels too harsh', title: 'Warming only the edges, not the center', duration: '1:00' },
+  { cat: 'When you disappear', title: 'Where to place brightness to reconnect your face', duration: '1:15' },
+  { cat: 'Harmony fixes', title: 'Moving blush up and out — and why it works', duration: '0:50' },
+  { cat: 'Harmony fixes', title: 'Fixing a muddy bronzer in one step', duration: '1:05' },
+  { cat: 'What changed with age', title: 'Why brightness matters more now than coverage', duration: '1:20' },
+  { cat: 'What changed with age', title: 'Why your old foundation stopped working', duration: '1:10' },
+  { cat: 'Breakthrough moments', title: 'The moment I stopped copying placement from influencers', duration: '1:25' },
+  { cat: 'Breakthrough moments', title: 'The difference between brightness and lightness', duration: '1:15' },
 ];
 
 const voteTopics = [
@@ -47,10 +47,10 @@ export default async function VideosPage() {
     <main className="mx-auto max-w-6xl px-6 py-12">
       {/* Hero */}
       <div className="rounded-2xl bg-neutral-900 p-8 mb-8">
-        <p className="mb-2 text-sm font-semibold text-neutral-500">Maya · Tutorial Library</p>
-        <h1 className="text-4xl font-semibold tracking-tight text-white">Learn from Adi.</h1>
+        <p className="mb-2 text-sm font-semibold text-neutral-500">Maya · Video Library</p>
+        <h1 className="text-4xl font-semibold tracking-tight text-white">Explore with me.</h1>
         <p className="mt-3 max-w-xl text-neutral-400 leading-7">
-          Short, practical videos built from 2+ years of personal experimentation. No sponsorships, no fluff — just what actually works as we age.
+          Short clips from my own makeup journey — the moments things finally clicked, and why. No expert lecturing, no sponsorships. Just what I've figured out.
         </p>
       </div>
 
@@ -60,10 +60,10 @@ export default async function VideosPage() {
           <PlayIcon />
         </div>
         <div className="p-5">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-400">Foundation · Base</p>
-          <h2 className="text-lg font-semibold tracking-tight text-neutral-900">Why fingertips beat brushes for a natural finish</h2>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-400">Why this happens</p>
+          <h2 className="text-lg font-semibold tracking-tight text-neutral-900">Why your blush turns orange</h2>
           <p className="mt-2 text-sm leading-6 text-neutral-500">
-            The single technique change that eliminates pilling and gives skin a lived-in, natural finish.
+            It&apos;s not the blush — it&apos;s the undertone clash. Here&apos;s what&apos;s actually happening on your skin.
           </p>
         </div>
       </div>
