@@ -257,7 +257,7 @@ export default function RefinePage() {
               🎙
             </button>
             <button
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={!input.trim() || sending}
               className="rounded-2xl bg-brand px-5 py-3 text-sm text-white hover:bg-[#C08878] transition-colors disabled:opacity-30"
             >
