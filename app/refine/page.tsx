@@ -301,6 +301,9 @@ export default function RefinePage() {
             </div>
           )}
 
+          {/* Chat surface */}
+          <div className="rounded-3xl border border-rose-200 bg-white shadow-sm p-4">
+
           {/* Messages */}
           <div className="flex flex-col gap-5 overflow-y-auto pb-4 max-h-[45vh] md:max-h-[calc(100vh-380px)]">
             {messages.map((msg, i) => (
@@ -444,7 +447,7 @@ export default function RefinePage() {
           )}
 
           {/* Input */}
-          <div className="mt-3 rounded-2xl border border-neutral-200 bg-white shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
+          <div className="mt-3 rounded-2xl border border-neutral-200 shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
             <input
               ref={inputRef}
               className="w-full px-4 pt-4 pb-2 text-sm bg-transparent border-none outline-none placeholder-neutral-400 text-neutral-900"
@@ -481,6 +484,8 @@ export default function RefinePage() {
               </button>
             </div>
           </div>
+
+          </div>{/* end chat surface */}
 
           <div className="flex items-center justify-end mt-2 px-1">
             <button onClick={clearChat} className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors underline">
