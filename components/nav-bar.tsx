@@ -9,6 +9,7 @@ const TABS = [
   { href: '/refine', label: 'Discovery', icon: '✦' },
   { href: '/inventory', label: 'My Collection', icon: '▣' },
   { href: '/dossier', label: 'Dossier', icon: '◇' },
+  { href: '/looks', label: 'Lookbooks', icon: '❖' },
   { href: '/videos', label: 'Learn', icon: '▶' },
 ];
 
@@ -45,6 +46,7 @@ export function NavBar() {
             <Link href="/refine">Discovery</Link>
             <Link href="/inventory">My Collection</Link>
             <Link href="/dossier">Dossier</Link>
+            <Link href="/looks">Lookbooks</Link>
             <Link href="/videos">Learn</Link>
             <SignOutButton />
           </nav>

@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join('\n');
 
     const existingLookbooks = (lookbooks ?? []).filter(Boolean);
-    const defaultLookbooks = ['Everyday', 'Evenings', 'Events', 'Experiments'];
-    const allLookbooks = [...new Set([...existingLookbooks, ...defaultLookbooks])];
+    const defaultLookbooks = ['Everyday', 'Business', 'Out & About', 'Evening', 'Formal', 'Special Events'];
+    const allLookbooks = [...new Set([...defaultLookbooks, ...existingLookbooks])];
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         },
         {
           role: 'user',
-          content: `The user wants to save this Maya message to their lookbook:\n\n"${content}"\n\nUser context:\n${userContext || 'Not available'}\n\nExisting lookbooks to choose from: ${allLookbooks.join(', ')}\n\nReturn ONLY a JSON object:\n{ "title": "short 3–6 word name for this saved look", "why": "one warm sentence on why this works for this specific user, referencing their undertone or contrast where relevant, in Maya's voice — observational, never a rule", "suggestedLookbook": "best-fit name from the provided lookbooks, or one of: Everyday, Evenings, Events, Experiments" }\n\nNo preamble. No markdown. JSON only.`,
+          content: `The user wants to save this Maya message to their lookbook:\n\n"${content}"\n\nUser context:\n${userContext || 'Not available'}\n\nLookbook categories to choose from (pick the best fit): ${allLookbooks.join(', ')}\n\nThe canonical categories are: Everyday, Business, Out & About, Evening, Formal, Special Events.\n\nReturn ONLY a JSON object:\n{ "title": "short 3–6 word name for this saved look", "why": "one warm sentence on why this works for this specific user, referencing their undertone or contrast where relevant, in Maya's voice — observational, never a rule", "suggestedLookbook": "the single best-fit category name from the list above" }\n\nNo preamble. No markdown. JSON only.`,
         },
       ],
     });
