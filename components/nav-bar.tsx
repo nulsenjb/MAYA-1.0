@@ -7,7 +7,7 @@ import { SignOutButton } from '@/components/sign-out-button';
 
 const TABS = [
   { href: '/refine', label: 'Discovery', icon: '✦' },
-  { href: '/inventory', label: 'My Collection', icon: '▣' },
+  { href: '/inventory', label: 'Collection', icon: '▣' },
   { href: '/dossier', label: 'Dossier', icon: '◇' },
   { href: '/looks', label: 'Lookbooks', icon: '❖' },
   { href: '/videos', label: 'Learn', icon: '▶' },
@@ -80,7 +80,7 @@ export function NavBar() {
                 {tab.icon}
               </span>
               <span
-                className="text-[10px] font-medium"
+                className="text-[10px] font-medium whitespace-nowrap text-center leading-tight"
                 style={{ color: active ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.45)' }}
               >
                 {tab.label}
@@ -95,7 +95,7 @@ export function NavBar() {
         >
           <div className="w-1 h-1 rounded-full mb-0.5 bg-transparent" />
           <span className="text-xl" style={{ color: 'rgba(255,255,255,0.45)' }}>→</span>
-          <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <span className="text-[10px] font-medium whitespace-nowrap text-center leading-tight" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Sign out
           </span>
         </button>
