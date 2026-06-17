@@ -19,6 +19,7 @@ export default function RefinePage() {
   const [productCount, setProductCount] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const initialRender = useRef(true);
   const { isListening, toggleVoice } = useVoiceInput((t) => setInput((p) => p + t));
 
   const [notes, setNotes] = useState<Note[]>([]);
@@ -69,7 +70,12 @@ export default function RefinePage() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    if (initialRender.current) { initialRender.current = false; return; }
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
@@ -180,7 +186,8 @@ export default function RefinePage() {
             </button>
           </div>
         </div>
-        <p className="mt-1 text-sm text-neutral-500">Tell Maya what you&apos;re noticing — or log what worked.</p>
+        <p className="mt-2 text-sm text-neutral-500 leading-relaxed">Maya helps you uncover what truly works for you—your colors, your features, your style, and the products you already own.</p>
+        <p className="mt-1 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
       </div>
 
       {tab === 'chat' && (
@@ -188,26 +195,26 @@ export default function RefinePage() {
 
           {/* Nudge cards */}
           {intakeComplete === false && (
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
+            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Before Maya can really see you, it helps to get to know your coloring.
+                Help Maya understand your coloring and current relationship to makeup.
               </p>
               <a
                 href="/intake"
-                className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+                className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
               >
                 Start your intake
               </a>
             </div>
           )}
           {intakeComplete === true && productCount === 0 && (
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
+            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
               <p className="text-sm text-neutral-600 leading-relaxed">
                 Maya works best when she knows what you already own.
               </p>
               <a
                 href="/inventory"
-                className="shrink-0 text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+                className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
               >
                 Add your products
               </a>
