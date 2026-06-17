@@ -7,7 +7,7 @@ import { SignOutButton } from '@/components/sign-out-button';
 
 const TABS = [
   { href: '/refine', label: 'Discovery', icon: '✦' },
-  { href: '/inventory', label: 'My Products', icon: '▣' },
+  { href: '/inventory', label: 'My Collection', icon: '▣' },
   { href: '/dossier', label: 'Dossier', icon: '◇' },
   { href: '/videos', label: 'Learn', icon: '▶' },
 ];
@@ -43,7 +43,7 @@ export function NavBar() {
             style={{ color: 'rgba(255,255,255,0.85)' }}
           >
             <Link href="/refine">Discovery</Link>
-            <Link href="/inventory">My Products</Link>
+            <Link href="/inventory">My Collection</Link>
             <Link href="/dossier">Dossier</Link>
             <Link href="/videos">Learn</Link>
             <SignOutButton />

@@ -163,7 +163,7 @@ export default function InventoryPage() {
     <main className="mx-auto max-w-6xl px-6 py-12 min-h-screen bg-rose-50">
 
       {/* Header */}
-      <h1 className="text-4xl font-semibold tracking-tight">My Products</h1>
+      <h1 className="text-4xl font-semibold tracking-tight">My Collection</h1>
       <p className="mt-3 text-sm leading-7 text-neutral-600 max-w-xl">
         The more Maya knows about what&apos;s already in your collection, the better she can help you use it — guiding you toward what you own instead of what to buy next. Snap a few photos below and she&apos;ll help you build it out.
       </p>
@@ -322,7 +322,7 @@ export default function InventoryPage() {
                 disabled={savingIdentified || identified.length === 0}
                 className="mt-5 w-full rounded-2xl bg-brand px-5 py-3 text-white text-sm font-semibold hover:bg-[#C08878] transition-colors disabled:opacity-50"
               >
-                {savingIdentified ? 'Saving…' : `Add ${identified.length} product${identified.length !== 1 ? 's' : ''} to My Products`}
+                {savingIdentified ? 'Saving…' : `Add ${identified.length} product${identified.length !== 1 ? 's' : ''} to My Collection`}
               </button>
             </section>
           )}

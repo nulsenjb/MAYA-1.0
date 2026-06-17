@@ -7,13 +7,6 @@ import { useVoiceInput } from '@/lib/voice-input';
 type Note = { id: string; note_date: string; title: string; note: string; outcome: string; };
 type Message = { id?: string; role: string; content: string; };
 
-function greetingFor(intakeComplete: boolean) {
-  if (intakeComplete) {
-    return "Hi, I'm Maya! What are you noticing today?";
-  }
-  return "Hi, I'm Maya! For the best experience, please complete the intake form so we can begin building your profile together.";
-}
-
 export default function RefinePage() {
   const [tab, setTab] = useState<'chat' | 'notes'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -59,7 +52,7 @@ export default function RefinePage() {
       if (chatRes.ok) {
         const data = await chatRes.json();
         if (data.messages.length === 0) {
-          setMessages([{ role: 'assistant', content: greetingFor(intakeDone) }]);
+          setMessages([]);
         } else {
           setMessages(data.messages);
         }
@@ -134,7 +127,7 @@ export default function RefinePage() {
 
   async function clearChat() {
     await fetch('/api/chat', { method: 'DELETE' });
-    setMessages([{ role: 'assistant', content: greetingFor(intakeComplete ?? false) }]);
+    setMessages([]);
     setLastSuggestedLook(null);
   }
 
@@ -195,7 +188,7 @@ export default function RefinePage() {
 
           {/* Nudge cards */}
           {intakeComplete === false && (
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex items-start justify-between gap-3">
+            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
               <p className="text-sm text-neutral-600 leading-relaxed">
                 Before Maya can really see you, it helps to get to know your coloring.
               </p>
@@ -208,7 +201,7 @@ export default function RefinePage() {
             </div>
           )}
           {intakeComplete === true && productCount === 0 && (
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex items-start justify-between gap-3">
+            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
               <p className="text-sm text-neutral-600 leading-relaxed">
                 Maya works best when she knows what you already own.
               </p>
@@ -264,7 +257,7 @@ export default function RefinePage() {
             <input
               ref={inputRef}
               className="w-full px-4 pt-4 pb-2 text-sm bg-transparent border-none outline-none placeholder-neutral-400 text-neutral-900"
-              placeholder="What are you noticing today?"
+              placeholder="What are we doing today?"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
