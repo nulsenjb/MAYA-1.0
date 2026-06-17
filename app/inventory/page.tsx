@@ -46,7 +46,7 @@ export default function InventoryPage() {
   useEffect(() => { loadItems(); }, []);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
+    <main className="mx-auto max-w-6xl px-6 py-12 min-h-screen bg-rose-50">
       <h1 className="text-4xl font-semibold tracking-tight">Inventory</h1>
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="rounded-3xl border bg-white p-8 shadow-sm">

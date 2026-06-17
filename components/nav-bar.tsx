@@ -26,8 +26,8 @@ export function NavBar() {
   return (
     <>
       <header
-        className="bg-[#D4A090] backdrop-blur"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}
+        className="backdrop-blur"
+        style={{ background: 'var(--grad-transition)', borderBottom: '1px solid rgba(255,255,255,0.15)' }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/refine">
@@ -52,8 +52,9 @@ export function NavBar() {
       </header>
 
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-[#D4A090] backdrop-blur-sm flex md:hidden items-center justify-around px-2 pt-2 pb-3"
+        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-sm flex md:hidden items-center justify-around px-2 pt-2 pb-3"
         style={{
+          background: 'var(--grad-transition)',
           paddingBottom: 'env(safe-area-inset-bottom, 12px)',
           borderTop: '1px solid rgba(255,255,255,0.15)',
         }}

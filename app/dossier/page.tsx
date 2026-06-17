@@ -46,7 +46,7 @@ function DossierContent() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
+    <main className="mx-auto max-w-6xl px-6 py-12 min-h-screen bg-rose-50">
       {isNew && (
         <div className="rounded-2xl bg-neutral-900 text-white p-6 mb-8">
           <div className="flex items-start justify-between gap-6">

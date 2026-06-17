@@ -44,7 +44,7 @@ export default async function VideosPage() {
   if (!user) redirect('/auth/login');
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
+    <main className="mx-auto max-w-6xl px-6 py-12 min-h-screen bg-rose-50">
       {/* Hero */}
       <div className="rounded-2xl bg-neutral-900 p-8 mb-8">
         <p className="mb-2 text-sm font-semibold text-neutral-500">Maya · Video Library</p>
