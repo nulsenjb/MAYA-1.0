@@ -299,25 +299,28 @@ export default function RefinePage() {
                   {msg.role === 'assistant' && (
                     <span className="text-[#D4A090] text-xs mt-2 shrink-0 select-none">✦</span>
                   )}
-                  <div className={`max-w-[80%] text-sm leading-7 ${
+                  <div className={`max-w-[80%] text-sm leading-7 break-words ${
                     msg.role === 'user'
                       ? 'bg-brand text-white rounded-2xl rounded-br-sm px-4 py-3'
                       : 'text-neutral-800'
                   }`}>
                     {msg.content}
                   </div>
-                  {msg.role === 'assistant' && (
+                </div>
+                {msg.role === 'assistant' && (
+                  <div className="ml-6 mt-1">
                     <button
                       type="button"
                       onClick={() => handleSaveMessage(i)}
                       disabled={savingIdx !== null}
                       aria-label="Save to lookbook"
-                      className="shrink-0 mt-1.5 text-neutral-300 hover:text-[#D4A090] transition-colors disabled:opacity-40"
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-40"
                     >
-                      <Bookmark size={14} className={savingIdx === i ? 'animate-pulse text-[#D4A090]' : ''} />
+                      <Bookmark size={12} className={savingIdx === i ? 'animate-pulse' : ''} />
+                      <span>{savingIdx === i ? 'Saving…' : 'Save to lookbook'}</span>
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Inline save card */}
                 {saveCard?.msgIdx === i && (
