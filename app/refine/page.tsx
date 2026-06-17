@@ -253,8 +253,7 @@ export default function RefinePage() {
             </button>
           </div>
         </div>
-        <p className="mt-2 text-sm text-neutral-500 leading-relaxed">Maya helps you uncover what truly works for you—your colors, your features, your style, and the products you already own.</p>
-        <p className="mt-1 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
+        <p className="mt-2 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
       </div>
 
       {tab === 'chat' && (

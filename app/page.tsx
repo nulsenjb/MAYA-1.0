@@ -20,7 +20,7 @@ export default function HomePage() {
           Stop Chasing Products. Start Understanding Yourself.
         </h1>
         <p className="mt-5 text-base leading-7 text-rose-700">
-          Through personalized guidance, Maya helps you discover why makeup behaves differently on you — and what to do about it.
+          Maya helps you uncover what truly works for you — your colors, your features, your style, and the products you already own.
         </p>
 
         {/* CTAs */}
