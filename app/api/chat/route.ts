@@ -2,15 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { openai } from '@/lib/openai';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const conversationId = req.nextUrl.searchParams.get('conversationId');
+  if (!conversationId) return NextResponse.json({ messages: [] });
 
   const { data, error } = await supabase
     .from('chat_messages')
     .select('*')
     .eq('user_id', user.id)
+    .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -23,7 +27,34 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { message } = await req.json();
+    const { message, conversationId: incomingConversationId } = await req.json();
+
+    let conversationId = incomingConversationId as string | null;
+    let title: string | undefined;
+
+    if (!conversationId) {
+      const titleCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Generate a short 3–5 word title for this conversation. Title only, no quotes.' },
+          { role: 'user', content: message },
+        ],
+        max_tokens: 12,
+        temperature: 0.5,
+      });
+      title = titleCompletion.choices[0].message.content?.trim() || 'New Conversation';
+
+      const { data: newConv, error: convError } = await supabase
+        .from('conversations')
+        .insert({ user_id: user.id, title })
+        .select('id')
+        .single();
+
+      if (convError || !newConv) {
+        return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });
+      }
+      conversationId = newConv.id;
+    }
 
     const [
       { data: intake },
@@ -34,13 +65,19 @@ export async function POST(req: NextRequest) {
       supabase.from('intake_profiles').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('inventory_items').select('*').eq('user_id', user.id),
       supabase.from('dossiers').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('chat_messages').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+      supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true }),
     ]);
 
     await supabase.from('chat_messages').insert({
       user_id: user.id,
       role: 'user',
       content: message,
+      conversation_id: conversationId,
     });
 
     const systemPrompt = `You are Maya — not the expert in the room, but the person who went on this journey first and is still on it. You speak like a curious friend who has noticed a lot of patterns and loves helping someone see their own. You explain the why behind things and never give rules or talk down. When something works or doesn't, your instinct is to ask and explain why, not to prescribe. Orient around 'why is this happening for you' rather than 'what should you buy.' The goal is for her to understand her own harmony, not to look younger or copy someone else.
@@ -77,13 +114,21 @@ Keep responses warm, conversational, and focused. If they share what worked or d
 
     const reply = completion.choices[0].message.content || '';
 
-    await supabase.from('chat_messages').insert({
-      user_id: user.id,
-      role: 'assistant',
-      content: reply,
-    });
+    await Promise.all([
+      supabase.from('chat_messages').insert({
+        user_id: user.id,
+        role: 'assistant',
+        content: reply,
+        conversation_id: conversationId,
+      }),
+      supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId)
+        .eq('user_id', user.id),
+    ]);
 
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply, conversationId, title });
   } catch (err) {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
