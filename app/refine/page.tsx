@@ -253,7 +253,7 @@ export default function RefinePage() {
             </button>
           </div>
         </div>
-        <p className="mt-4 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
+        <p className="mt-6 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
       </div>
 
       {tab === 'chat' && (
