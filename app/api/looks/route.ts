@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
         steps: body.steps || [],
         palette: body.palette || [],
         notes: body.notes || '',
+        why: body.why || '',
+        lookbook: body.lookbook || '',
       })
       .select('*')
       .single();

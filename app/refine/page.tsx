@@ -1,22 +1,38 @@
 'use client';
 
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Bookmark } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useVoiceInput } from '@/lib/voice-input';
 
 type Note = { id: string; note_date: string; title: string; note: string; outcome: string; };
 type Message = { id?: string; role: string; content: string; };
 
+type SaveCard = {
+  msgIdx: number;
+  title: string;
+  why: string;
+  suggestedLookbook: string;
+  lookbook: string;
+  newLookbook: string;
+  isNew: boolean;
+  saving: boolean;
+  confirmation: string;
+};
+
+const DEFAULT_LOOKBOOKS = ['Everyday', 'Evenings', 'Events', 'Experiments'];
+
 export default function RefinePage() {
   const [tab, setTab] = useState<'chat' | 'notes'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [lastSuggestedLook, setLastSuggestedLook] = useState<string | null>(null);
-  const [savedMsg, setSavedMsg] = useState('');
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const [intakeComplete, setIntakeComplete] = useState<boolean | null>(null);
   const [productCount, setProductCount] = useState<number | null>(null);
+  const [lookbooks, setLookbooks] = useState<string[]>([]);
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [saveCard, setSaveCard] = useState<SaveCard | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialRender = useRef(true);
@@ -32,12 +48,16 @@ export default function RefinePage() {
   });
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     async function init() {
-      // Fetch everything in parallel so greeting is intake-aware
-      const [chatRes, intakeRes, inventoryRes] = await Promise.all([
+      const [chatRes, intakeRes, inventoryRes, looksRes] = await Promise.all([
         fetch('/api/chat'),
         fetch('/api/intake'),
         fetch('/api/inventory'),
+        fetch('/api/looks'),
       ]);
 
       let intakeDone = false;
@@ -50,13 +70,13 @@ export default function RefinePage() {
         const { items } = await inventoryRes.json();
         setProductCount((items ?? []).length);
       }
+      if (looksRes.ok) {
+        const { looks } = await looksRes.json();
+        refreshLookbooks(looks ?? []);
+      }
       if (chatRes.ok) {
         const data = await chatRes.json();
-        if (data.messages.length === 0) {
-          setMessages([]);
-        } else {
-          setMessages(data.messages);
-        }
+        setMessages(data.messages.length > 0 ? data.messages : []);
       }
 
       const seed = sessionStorage.getItem('maya_seed_message');
@@ -70,13 +90,22 @@ export default function RefinePage() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
     if (initialRender.current) { initialRender.current = false; return; }
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
+
+  function refreshLookbooks(looks: { lookbook?: string }[]) {
+    const names = [...new Set(looks.map((l) => l.lookbook).filter(Boolean))] as string[];
+    setLookbooks(names);
+  }
+
+  async function reloadLookbooks() {
+    const res = await fetch('/api/looks');
+    if (res.ok) {
+      const { looks } = await res.json();
+      refreshLookbooks(looks ?? []);
+    }
+  }
 
   function handlePhotoAttach(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -100,41 +129,77 @@ export default function RefinePage() {
 
     const data = await res.json();
     if (res.ok) {
-      const reply = data.reply;
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-      const looksLike =
-        reply.toLowerCase().includes('step') ||
-        reply.toLowerCase().includes('foundation') ||
-        reply.toLowerCase().includes('blush') ||
-        reply.toLowerCase().includes('lip') ||
-        reply.toLowerCase().includes('mascara') ||
-        reply.toLowerCase().includes('concealer') ||
-        reply.length > 300;
-      if (looksLike) setLastSuggestedLook(reply);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
     }
     setSending(false);
     inputRef.current?.focus();
   }
 
-  async function saveLookFromChat() {
-    if (!lastSuggestedLook) return;
-    const lines = lastSuggestedLook.split('\n').filter(Boolean);
-    const title = lines[0].replace(/[^a-zA-Z0-9 ]/g, '').trim().slice(0, 40) || 'Chat Look';
-    const steps = lines.slice(1).filter(l => l.trim().length > 0);
-    await fetch('/api/looks', {
+  async function handleSaveMessage(msgIdx: number) {
+    const msg = messages[msgIdx];
+    if (!msg || savingIdx !== null) return;
+    setSavingIdx(msgIdx);
+    setSaveCard(null);
+    try {
+      const res = await fetch('/api/looks/prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: msg.content, lookbooks }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const suggested = data.suggestedLookbook || 'Everyday';
+      setSaveCard({
+        msgIdx,
+        title: data.title || 'Saved look',
+        why: data.why || '',
+        suggestedLookbook: suggested,
+        lookbook: suggested,
+        newLookbook: '',
+        isNew: false,
+        saving: false,
+        confirmation: '',
+      });
+    } catch {
+      // silently fail — button just returns to normal state
+    } finally {
+      setSavingIdx(null);
+    }
+  }
+
+  async function confirmSave() {
+    if (!saveCard) return;
+    const resolvedLookbook = saveCard.isNew ? saveCard.newLookbook.trim() : saveCard.lookbook;
+    if (!resolvedLookbook) return;
+    setSaveCard(prev => prev ? { ...prev, saving: true } : null);
+
+    const msg = messages[saveCard.msgIdx];
+    const res = await fetch('/api/looks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, occasion: 'chat', steps, palette: [] }),
+      body: JSON.stringify({
+        title: saveCard.title,
+        why: saveCard.why,
+        lookbook: resolvedLookbook,
+        steps: msg.content.split('\n').filter(l => l.trim()),
+        occasion: '',
+        palette: [],
+      }),
     });
-    setSavedMsg('Look saved to playlist!');
-    setLastSuggestedLook(null);
-    setTimeout(() => setSavedMsg(''), 3000);
+
+    if (res.ok) {
+      await reloadLookbooks();
+      setSaveCard(prev => prev ? { ...prev, saving: false, confirmation: `Saved to ${resolvedLookbook}` } : null);
+      setTimeout(() => setSaveCard(null), 2000);
+    } else {
+      setSaveCard(prev => prev ? { ...prev, saving: false } : null);
+    }
   }
 
   async function clearChat() {
     await fetch('/api/chat', { method: 'DELETE' });
     setMessages([]);
-    setLastSuggestedLook(null);
+    setSaveCard(null);
   }
 
   async function loadNotes() {
@@ -157,6 +222,8 @@ export default function RefinePage() {
     loadNotes();
   }
 
+  const allLookbookOptions = [...new Set([...lookbooks, ...DEFAULT_LOOKBOOKS])];
+
   const outcomeColors: Record<string, string> = {
     love: 'text-pink-600',
     good: 'text-green-600',
@@ -167,7 +234,7 @@ export default function RefinePage() {
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 pt-6 pb-28 md:pb-12 min-h-screen bg-rose-50">
 
-      {/* Header — title and toggle on same row, subtitle below */}
+      {/* Header */}
       <div className="mb-5">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight shrink-0">Discovery</h1>
@@ -221,20 +288,103 @@ export default function RefinePage() {
             </div>
           )}
 
-          {/* Messages — no min-height so input stays visible on small screens */}
+          {/* Messages */}
           <div className="flex flex-col gap-5 overflow-y-auto pb-4 max-h-[45vh] md:max-h-[calc(100vh-380px)]">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.role === 'assistant' && (
-                  <span className="text-[#D4A090] text-xs mt-2 shrink-0 select-none">✦</span>
-                )}
-                <div className={`max-w-[80%] text-sm leading-7 ${
-                  msg.role === 'user'
-                    ? 'bg-brand text-white rounded-2xl rounded-br-sm px-4 py-3'
-                    : 'text-neutral-800'
-                }`}>
-                  {msg.content}
+              <div key={i}>
+                <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <span className="text-[#D4A090] text-xs mt-2 shrink-0 select-none">✦</span>
+                  )}
+                  <div className={`max-w-[80%] text-sm leading-7 ${
+                    msg.role === 'user'
+                      ? 'bg-brand text-white rounded-2xl rounded-br-sm px-4 py-3'
+                      : 'text-neutral-800'
+                  }`}>
+                    {msg.content}
+                  </div>
+                  {msg.role === 'assistant' && (
+                    <button
+                      type="button"
+                      onClick={() => handleSaveMessage(i)}
+                      disabled={savingIdx !== null}
+                      aria-label="Save to lookbook"
+                      className="shrink-0 mt-1.5 text-neutral-300 hover:text-[#D4A090] transition-colors disabled:opacity-40"
+                    >
+                      <Bookmark size={14} className={savingIdx === i ? 'animate-pulse text-[#D4A090]' : ''} />
+                    </button>
+                  )}
                 </div>
+
+                {/* Inline save card */}
+                {saveCard?.msgIdx === i && (
+                  <div className="mt-3 ml-6 rounded-2xl border border-rose-200 bg-white p-4 shadow-sm">
+                    {saveCard.confirmation ? (
+                      <p className="text-sm text-center text-neutral-500 py-1">{saveCard.confirmation}</p>
+                    ) : (
+                      <>
+                        <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-3">Save to lookbook</p>
+
+                        {/* Title */}
+                        <input
+                          className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
+                          value={saveCard.title}
+                          onChange={(e) => setSaveCard(prev => prev ? { ...prev, title: e.target.value } : null)}
+                          placeholder="Name this look"
+                        />
+
+                        {/* Why */}
+                        <p className="text-xs text-neutral-500 italic leading-relaxed mb-3">{saveCard.why}</p>
+
+                        {/* Lookbook selector */}
+                        <select
+                          className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
+                          value={saveCard.isNew ? '__new__' : saveCard.lookbook}
+                          onChange={(e) => {
+                            if (e.target.value === '__new__') {
+                              setSaveCard(prev => prev ? { ...prev, isNew: true, lookbook: '' } : null);
+                            } else {
+                              setSaveCard(prev => prev ? { ...prev, isNew: false, lookbook: e.target.value } : null);
+                            }
+                          }}
+                        >
+                          {allLookbookOptions.map((lb) => (
+                            <option key={lb} value={lb}>{lb}</option>
+                          ))}
+                          <option value="__new__">New lookbook…</option>
+                        </select>
+
+                        {saveCard.isNew && (
+                          <input
+                            className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
+                            placeholder="Lookbook name"
+                            value={saveCard.newLookbook}
+                            onChange={(e) => setSaveCard(prev => prev ? { ...prev, newLookbook: e.target.value } : null)}
+                            autoFocus
+                          />
+                        )}
+
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={confirmSave}
+                            disabled={saveCard.saving || (saveCard.isNew && !saveCard.newLookbook.trim())}
+                            className="flex-1 rounded-xl bg-brand text-white text-xs font-semibold py-2 hover:bg-[#C08878] transition-colors disabled:opacity-40"
+                          >
+                            {saveCard.saving ? 'Saving…' : 'Save'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSaveCard(null)}
+                            className="flex-1 rounded-xl border border-neutral-200 text-xs text-neutral-500 py-2 hover:bg-neutral-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {sending && (
@@ -245,19 +395,6 @@ export default function RefinePage() {
             )}
             <div ref={bottomRef} />
           </div>
-
-          {/* Save look banner */}
-          {lastSuggestedLook && (
-            <div className="mt-2 mb-2 rounded-xl bg-neutral-50 border border-neutral-100 px-4 py-3 flex items-center justify-between gap-4">
-              <p className="text-xs text-neutral-500">Maya noticed a look — want to save it?</p>
-              <button onClick={saveLookFromChat} className="rounded-xl bg-brand px-4 py-2 text-xs text-white hover:bg-[#C08878] transition-colors">
-                Save to playlist
-              </button>
-            </div>
-          )}
-          {savedMsg && (
-            <p className="mb-2 text-center text-xs text-neutral-400">{savedMsg}</p>
-          )}
 
           {/* Input */}
           <div className="mt-3 rounded-2xl border border-neutral-200 bg-white shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
