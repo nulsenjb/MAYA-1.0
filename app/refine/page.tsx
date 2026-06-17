@@ -3,9 +3,13 @@
 import { ArrowUp, Bookmark } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useVoiceInput } from '@/lib/voice-input';
+import { Fraunces } from 'next/font/google';
+
+const fraunces = Fraunces({ subsets: ['latin'], weight: ['300', '400'] });
 
 type Note = { id: string; note_date: string; title: string; note: string; outcome: string; };
 type Message = { id?: string; role: string; content: string; };
+type Conversation = { id: string; title: string | null; updated_at: string; };
 
 type SaveCard = {
   msgIdx: number;
@@ -26,6 +30,9 @@ const DEFAULT_LOOKBOOKS = ['Everyday', 'Work', 'Date Night', 'Evening', 'Formal'
 export default function RefinePage() {
   const [tab, setTab] = useState<'chat' | 'notes'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [chatsOpen, setChatsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
@@ -54,10 +61,18 @@ export default function RefinePage() {
     window.scrollTo(0, 0);
   }, []);
 
+  async function fetchConversations() {
+    const res = await fetch('/api/conversations');
+    if (res.ok) {
+      const data = await res.json();
+      setConversations(data.conversations ?? []);
+    }
+  }
+
   useEffect(() => {
     async function init() {
-      const [chatRes, intakeRes, inventoryRes, looksRes] = await Promise.all([
-        fetch('/api/chat'),
+      const [convsRes, intakeRes, inventoryRes, looksRes] = await Promise.all([
+        fetch('/api/conversations'),
         fetch('/api/intake'),
         fetch('/api/inventory'),
         fetch('/api/looks'),
@@ -77,9 +92,9 @@ export default function RefinePage() {
         const { looks } = await looksRes.json();
         refreshLookbooks(looks ?? []);
       }
-      if (chatRes.ok) {
-        const data = await chatRes.json();
-        setMessages(data.messages.length > 0 ? data.messages : []);
+      if (convsRes.ok) {
+        const data = await convsRes.json();
+        setConversations(data.conversations ?? []);
       }
 
       const seed = sessionStorage.getItem('maya_seed_message');
@@ -117,6 +132,32 @@ export default function RefinePage() {
     setAttachedPhoto(file.name);
   }
 
+  function newChat() {
+    setMessages([]);
+    setCurrentConversationId(null);
+    setSaveCard(null);
+    setLookPromptIdx(null);
+    setChatsOpen(false);
+  }
+
+  async function openConversation(id: string) {
+    const res = await fetch(`/api/chat?conversationId=${id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setMessages(data.messages ?? []);
+    }
+    setCurrentConversationId(id);
+    setSaveCard(null);
+    setLookPromptIdx(null);
+    setChatsOpen(false);
+  }
+
+  async function deleteConversation(id: string) {
+    await fetch(`/api/conversations?id=${id}`, { method: 'DELETE' });
+    if (id === currentConversationId) newChat();
+    fetchConversations();
+  }
+
   async function sendMessage(text?: string) {
     const userMessage = (text ?? input).trim();
     if (!userMessage || sending) return;
@@ -125,15 +166,20 @@ export default function RefinePage() {
     setLookPromptIdx(null);
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
+    const activeConversationId = currentConversationId;
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: userMessage }),
+      body: JSON.stringify({ message: userMessage, conversationId: activeConversationId }),
     });
 
     const data = await res.json();
     if (res.ok) {
       const reply: string = data.reply;
+      if (!activeConversationId) {
+        setCurrentConversationId(data.conversationId);
+      }
       setMessages(prev => {
         const next = [...prev, { role: 'assistant', content: reply }];
         const looksLike =
@@ -142,6 +188,7 @@ export default function RefinePage() {
         if (looksLike) setLookPromptIdx(next.length - 1);
         return next;
       });
+      fetchConversations();
     }
     setSending(false);
     inputRef.current?.focus();
@@ -175,7 +222,7 @@ export default function RefinePage() {
         palette: data.palette ?? [],
       });
     } catch {
-      // silently fail — button just returns to normal state
+      // silently fail
     } finally {
       setSavingIdx(null);
     }
@@ -187,7 +234,6 @@ export default function RefinePage() {
     if (!resolvedLookbook) return;
     setSaveCard(prev => prev ? { ...prev, saving: true } : null);
 
-    const msg = messages[saveCard.msgIdx];
     const res = await fetch('/api/looks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -208,12 +254,6 @@ export default function RefinePage() {
     } else {
       setSaveCard(prev => prev ? { ...prev, saving: false } : null);
     }
-  }
-
-  async function clearChat() {
-    await fetch('/api/chat', { method: 'DELETE' });
-    setMessages([]);
-    setSaveCard(null);
   }
 
   async function loadNotes() {
@@ -245,8 +285,54 @@ export default function RefinePage() {
     fail: 'text-red-500',
   };
 
+  /* Sidebar content — rendered in both desktop rail and mobile drawer */
+  function SidebarInner() {
+    return (
+      <div className="flex flex-col gap-1 w-full">
+        <p className={`${fraunces.className} text-xs font-light text-rose-400 uppercase tracking-widest px-3 mb-2`}>
+          Chats
+        </p>
+        <button
+          onClick={newChat}
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-700 hover:bg-rose-50 transition-colors text-left font-medium"
+        >
+          <span className="text-base leading-none">+</span> New chat
+        </button>
+        <div className="mt-1 flex flex-col gap-0.5">
+          {conversations.length === 0 && (
+            <p className="px-3 py-2 text-xs text-neutral-400">No chats yet.</p>
+          )}
+          {conversations.map((conv) => (
+            <div
+              key={conv.id}
+              role="button"
+              onClick={() => openConversation(conv.id)}
+              className={`group flex items-center gap-1 rounded-xl px-3 py-2 cursor-pointer transition-colors ${
+                conv.id === currentConversationId
+                  ? 'bg-rose-100'
+                  : 'hover:bg-rose-50'
+              }`}
+            >
+              <span className="flex-1 text-sm text-neutral-700 truncate leading-snug">
+                {conv.title || 'Untitled'}
+              </span>
+              <button
+                type="button"
+                aria-label="Delete conversation"
+                onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+                className="shrink-0 opacity-0 group-hover:opacity-100 text-rose-300 hover:text-rose-600 transition-all text-base leading-none px-0.5"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <main className="mx-auto max-w-3xl px-4 sm:px-6 pt-6 pb-28 md:pb-12 min-h-screen bg-rose-50">
+    <main className="mx-auto max-w-5xl px-4 sm:px-6 pt-6 pb-28 md:pb-12 min-h-screen bg-rose-50">
 
       {/* Header */}
       <div className="mb-5">
@@ -271,229 +357,260 @@ export default function RefinePage() {
       </div>
 
       {tab === 'chat' && (
-        <div className="flex flex-col">
+        <div className="md:grid md:grid-cols-[240px_1fr] md:gap-5 items-start">
 
-          {/* Nudge cards */}
-          {intakeComplete === false && (
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Help Maya understand your coloring, features, and current relationship to makeup.
-              </p>
-              <a
-                href="/intake"
-                className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
-              >
-                Start your intake
-              </a>
-            </div>
-          )}
-          {intakeComplete === true && productCount === 0 && (
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Maya works best when she knows what you already own.
-              </p>
-              <a
-                href="/inventory"
-                className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
-              >
-                Add your products
-              </a>
-            </div>
-          )}
+          {/* Desktop sidebar rail */}
+          <aside className="hidden md:block sticky top-6 rounded-2xl border border-rose-100 bg-white/70 p-3">
+            <SidebarInner />
+          </aside>
 
-          {/* Chat surface */}
-          <div className="rounded-3xl border border-rose-200 bg-white shadow-sm p-4">
+          {/* Chat column */}
+          <div className="flex flex-col">
 
-          {/* Messages */}
-          <div className="flex flex-col gap-5 overflow-y-auto pb-4 max-h-[45vh] md:max-h-[calc(100vh-380px)]">
-            {messages.map((msg, i) => (
-              <div key={i}>
-                <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.role === 'assistant' && (
-                    <span className="text-[#D4A090] text-xs mt-2 shrink-0 select-none">✦</span>
-                  )}
-                  <div className={`max-w-[80%] text-sm leading-7 break-words ${
-                    msg.role === 'user'
-                      ? 'bg-brand text-white rounded-2xl rounded-br-sm px-4 py-3'
-                      : 'text-neutral-800'
-                  }`}>
-                    {msg.content}
-                  </div>
-                </div>
-                {msg.role === 'assistant' && (
-                  <div className="ml-6 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleSaveMessage(i)}
-                      disabled={savingIdx !== null}
-                      aria-label="Save to lookbook"
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-40"
-                    >
-                      <Bookmark size={12} className={savingIdx === i ? 'animate-pulse' : ''} />
-                      <span>{savingIdx === i ? 'Saving…' : 'Save to lookbook'}</span>
-                    </button>
-                  </div>
-                )}
+            {/* Mobile: Chats button */}
+            <button
+              onClick={() => setChatsOpen(true)}
+              className={`md:hidden mb-3 self-start flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-sm text-rose-700 hover:bg-rose-50 transition-colors ${fraunces.className}`}
+            >
+              ☰ Chats
+            </button>
 
-                {/* Inline save card */}
-                {saveCard?.msgIdx === i && (
-                  <div className="mt-3 ml-6 rounded-2xl border border-rose-200 bg-white p-4 shadow-sm">
-                    {saveCard.confirmation ? (
-                      <p className="text-sm text-center text-neutral-500 py-1">{saveCard.confirmation}</p>
-                    ) : (
-                      <>
-                        <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-3">Save to lookbook</p>
-
-                        {/* Title */}
-                        <input
-                          className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
-                          value={saveCard.title}
-                          onChange={(e) => setSaveCard(prev => prev ? { ...prev, title: e.target.value } : null)}
-                          placeholder="Name this look"
-                        />
-
-                        {/* Why */}
-                        <p className="text-xs text-neutral-500 italic leading-relaxed mb-3">{saveCard.why}</p>
-
-                        {/* Lookbook selector */}
-                        <select
-                          className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
-                          value={saveCard.isNew ? '__new__' : saveCard.lookbook}
-                          onChange={(e) => {
-                            if (e.target.value === '__new__') {
-                              setSaveCard(prev => prev ? { ...prev, isNew: true, lookbook: '' } : null);
-                            } else {
-                              setSaveCard(prev => prev ? { ...prev, isNew: false, lookbook: e.target.value } : null);
-                            }
-                          }}
-                        >
-                          {allLookbookOptions.map((lb) => (
-                            <option key={lb} value={lb}>{lb}</option>
-                          ))}
-                          <option value="__new__">New lookbook…</option>
-                        </select>
-
-                        {saveCard.isNew && (
-                          <input
-                            className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
-                            placeholder="Lookbook name"
-                            value={saveCard.newLookbook}
-                            onChange={(e) => setSaveCard(prev => prev ? { ...prev, newLookbook: e.target.value } : null)}
-                            autoFocus
-                          />
-                        )}
-
-                        <div className="flex gap-2 mt-1">
-                          <button
-                            type="button"
-                            onClick={confirmSave}
-                            disabled={saveCard.saving || (saveCard.isNew && !saveCard.newLookbook.trim())}
-                            className="flex-1 rounded-xl bg-brand text-white text-xs font-semibold py-2 hover:bg-[#C08878] transition-colors disabled:opacity-40"
-                          >
-                            {saveCard.saving ? 'Saving…' : 'Save'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSaveCard(null)}
-                            className="flex-1 rounded-xl border border-neutral-200 text-xs text-neutral-500 py-2 hover:bg-neutral-50 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            {sending && (
-              <div className="flex items-start gap-3 justify-start">
-                <span className="text-[#D4A090] text-xs mt-1 shrink-0 select-none">✦</span>
-                <div className="text-sm text-neutral-400 italic">Looking at this with you…</div>
+            {/* Nudge cards */}
+            {intakeComplete === false && (
+              <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
+                <p className="text-sm text-neutral-600 leading-relaxed">
+                  Help Maya understand your coloring, features, and current relationship to makeup.
+                </p>
+                <a
+                  href="/intake"
+                  className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
+                >
+                  Start your intake
+                </a>
               </div>
             )}
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Look prompt banner */}
-          {lookPromptIdx !== null && (
-            <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-100 px-4 py-4 flex items-center justify-between gap-3">
-              <p className="text-sm text-rose-900 font-medium leading-snug">
-                Maya created a look for you — add it to a lookbook?
-              </p>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const idx = lookPromptIdx;
-                    setLookPromptIdx(null);
-                    handleSaveMessage(idx);
-                  }}
-                  className="rounded-xl px-3 py-2 text-xs font-semibold text-white"
-                  style={{ background: 'var(--grad-deep)' }}
+            {intakeComplete === true && productCount === 0 && (
+              <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
+                <p className="text-sm text-neutral-600 leading-relaxed">
+                  Maya works best when she knows what you already own.
+                </p>
+                <a
+                  href="/inventory"
+                  className="text-xs font-semibold text-[#D4A090] border border-[#D4A090] rounded-lg px-3 py-1.5 hover:bg-[#D4A090] hover:text-white transition-colors"
                 >
-                  Add to Lookbook
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLookPromptIdx(null)}
-                  aria-label="Dismiss"
-                  className="text-rose-400 hover:text-rose-700 transition-colors text-base leading-none"
-                >
-                  ×
-                </button>
+                  Add your products
+                </a>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Input */}
-          <div className="mt-3 rounded-2xl border border-neutral-200 shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
-            <input
-              ref={inputRef}
-              className="w-full px-4 pt-4 pb-2 text-sm bg-transparent border-none outline-none placeholder-neutral-400 text-neutral-900"
-              placeholder="What are we doing today?"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-            />
-            <div className="flex items-center justify-between px-3 pb-3 pt-1">
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors">
-                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
-                  <span className="text-base">📷</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={toggleVoice}
-                  className={`text-base transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
-                  aria-label="Voice input"
-                >
-                  🎙
-                </button>
-                {attachedPhoto && (
-                  <span className="text-xs text-neutral-500 truncate max-w-[100px]">📎 {attachedPhoto}</span>
+            {/* Chat surface */}
+            <div className="rounded-3xl border border-rose-200 bg-white shadow-sm p-4">
+
+              {/* Messages */}
+              <div className="flex flex-col gap-5 overflow-y-auto pb-4 max-h-[45vh] md:max-h-[calc(100vh-380px)]">
+                {messages.map((msg, i) => (
+                  <div key={i}>
+                    <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.role === 'assistant' && (
+                        <span className="text-[#D4A090] text-xs mt-2 shrink-0 select-none">✦</span>
+                      )}
+                      <div className={`max-w-[80%] text-sm leading-7 break-words ${
+                        msg.role === 'user'
+                          ? 'bg-brand text-white rounded-2xl rounded-br-sm px-4 py-3'
+                          : 'text-neutral-800'
+                      }`}>
+                        {msg.content}
+                      </div>
+                    </div>
+                    {msg.role === 'assistant' && (
+                      <div className="ml-6 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleSaveMessage(i)}
+                          disabled={savingIdx !== null}
+                          aria-label="Save to lookbook"
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-40"
+                        >
+                          <Bookmark size={12} className={savingIdx === i ? 'animate-pulse' : ''} />
+                          <span>{savingIdx === i ? 'Saving…' : 'Save to lookbook'}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Inline save card */}
+                    {saveCard?.msgIdx === i && (
+                      <div className="mt-3 ml-6 rounded-2xl border border-rose-200 bg-white p-4 shadow-sm">
+                        {saveCard.confirmation ? (
+                          <p className="text-sm text-center text-neutral-500 py-1">{saveCard.confirmation}</p>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-3">Save to lookbook</p>
+
+                            <input
+                              className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
+                              value={saveCard.title}
+                              onChange={(e) => setSaveCard(prev => prev ? { ...prev, title: e.target.value } : null)}
+                              placeholder="Name this look"
+                            />
+
+                            <p className="text-xs text-neutral-500 italic leading-relaxed mb-3">{saveCard.why}</p>
+
+                            <select
+                              className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
+                              value={saveCard.isNew ? '__new__' : saveCard.lookbook}
+                              onChange={(e) => {
+                                if (e.target.value === '__new__') {
+                                  setSaveCard(prev => prev ? { ...prev, isNew: true, lookbook: '' } : null);
+                                } else {
+                                  setSaveCard(prev => prev ? { ...prev, isNew: false, lookbook: e.target.value } : null);
+                                }
+                              }}
+                            >
+                              {allLookbookOptions.map((lb) => (
+                                <option key={lb} value={lb}>{lb}</option>
+                              ))}
+                              <option value="__new__">New lookbook…</option>
+                            </select>
+
+                            {saveCard.isNew && (
+                              <input
+                                className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm mb-2 outline-none focus:border-brand transition-colors"
+                                placeholder="Lookbook name"
+                                value={saveCard.newLookbook}
+                                onChange={(e) => setSaveCard(prev => prev ? { ...prev, newLookbook: e.target.value } : null)}
+                                autoFocus
+                              />
+                            )}
+
+                            <div className="flex gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={confirmSave}
+                                disabled={saveCard.saving || (saveCard.isNew && !saveCard.newLookbook.trim())}
+                                className="flex-1 rounded-xl bg-brand text-white text-xs font-semibold py-2 hover:bg-[#C08878] transition-colors disabled:opacity-40"
+                              >
+                                {saveCard.saving ? 'Saving…' : 'Save'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSaveCard(null)}
+                                className="flex-1 rounded-xl border border-neutral-200 text-xs text-neutral-500 py-2 hover:bg-neutral-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {sending && (
+                  <div className="flex items-start gap-3 justify-start">
+                    <span className="text-[#D4A090] text-xs mt-1 shrink-0 select-none">✦</span>
+                    <div className="text-sm text-neutral-400 italic">Looking at this with you…</div>
+                  </div>
                 )}
+                <div ref={bottomRef} />
               </div>
+
+              {/* Look prompt banner */}
+              {lookPromptIdx !== null && (
+                <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-100 px-4 py-4 flex items-center justify-between gap-3">
+                  <p className="text-sm text-rose-900 font-medium leading-snug">
+                    Maya created a look for you — add it to a lookbook?
+                  </p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const idx = lookPromptIdx;
+                        setLookPromptIdx(null);
+                        handleSaveMessage(idx);
+                      }}
+                      className="rounded-xl px-3 py-2 text-xs font-semibold text-white"
+                      style={{ background: 'var(--grad-deep)' }}
+                    >
+                      Add to Lookbook
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLookPromptIdx(null)}
+                      aria-label="Dismiss"
+                      className="text-rose-400 hover:text-rose-700 transition-colors text-base leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Input */}
+              <div className="mt-3 rounded-2xl border border-neutral-200 shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
+                <input
+                  ref={inputRef}
+                  className="w-full px-4 pt-4 pb-2 text-sm bg-transparent border-none outline-none placeholder-neutral-400 text-neutral-900"
+                  placeholder="What are we doing today?"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                />
+                <div className="flex items-center justify-between px-3 pb-3 pt-1">
+                  <div className="flex items-center gap-3">
+                    <label className="cursor-pointer text-neutral-400 hover:text-neutral-600 transition-colors">
+                      <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoAttach} />
+                      <span className="text-base">📷</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={toggleVoice}
+                      className={`text-base transition-colors ${isListening ? 'text-[#D4A090]' : 'text-neutral-400 hover:text-neutral-600'}`}
+                      aria-label="Voice input"
+                    >
+                      🎙
+                    </button>
+                    {attachedPhoto && (
+                      <span className="text-xs text-neutral-500 truncate max-w-[100px]">📎 {attachedPhoto}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => sendMessage()}
+                    disabled={!input.trim() || sending}
+                    aria-label="Send"
+                    className="w-8 h-8 rounded-xl bg-brand text-white flex items-center justify-center hover:bg-[#C08878] active:scale-95 transition-all disabled:opacity-30 shrink-0"
+                  >
+                    <ArrowUp size={14} strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+
+            </div>{/* end chat surface */}
+
+          </div>{/* end chat column */}
+        </div>
+      )}
+
+      {/* Mobile drawer */}
+      {chatsOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/20 z-40 md:hidden"
+            onClick={() => setChatsOpen(false)}
+          />
+          <div className="fixed left-0 top-0 h-full w-64 bg-white z-50 md:hidden shadow-xl flex flex-col p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <span className={`${fraunces.className} text-sm font-light text-rose-400`}>Chats</span>
               <button
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || sending}
-                aria-label="Send"
-                className="w-8 h-8 rounded-xl bg-brand text-white flex items-center justify-center hover:bg-[#C08878] active:scale-95 transition-all disabled:opacity-30 shrink-0"
+                onClick={() => setChatsOpen(false)}
+                className="text-neutral-400 hover:text-neutral-600 transition-colors text-lg leading-none"
+                aria-label="Close"
               >
-                <ArrowUp size={14} strokeWidth={2.5} />
+                ×
               </button>
             </div>
+            <SidebarInner />
           </div>
-
-          </div>{/* end chat surface */}
-
-          <div className="flex items-center justify-end mt-2 px-1">
-            <button onClick={clearChat} className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors underline">
-              Clear chat
-            </button>
-          </div>
-
-        </div>
+        </>
       )}
 
       {tab === 'notes' && (
