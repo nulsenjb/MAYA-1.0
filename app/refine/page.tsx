@@ -34,6 +34,7 @@ export default function RefinePage() {
   const [lookbooks, setLookbooks] = useState<string[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [saveCard, setSaveCard] = useState<SaveCard | null>(null);
+  const [lookPromptIdx, setLookPromptIdx] = useState<number | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +122,7 @@ export default function RefinePage() {
     if (!userMessage || sending) return;
     if (!text) setInput('');
     setSending(true);
+    setLookPromptIdx(null);
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     const res = await fetch('/api/chat', {
@@ -131,7 +133,15 @@ export default function RefinePage() {
 
     const data = await res.json();
     if (res.ok) {
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      const reply: string = data.reply;
+      setMessages(prev => {
+        const next = [...prev, { role: 'assistant', content: reply }];
+        const looksLike =
+          reply.length > 300 ||
+          /step|foundation|blush|bronzer|concealer|lip|mascara|eyeshadow|contour|highlight/i.test(reply);
+        if (looksLike) setLookPromptIdx(next.length - 1);
+        return next;
+      });
     }
     setSending(false);
     inputRef.current?.focus();
@@ -401,6 +411,37 @@ export default function RefinePage() {
             )}
             <div ref={bottomRef} />
           </div>
+
+          {/* Look prompt banner */}
+          {lookPromptIdx !== null && (
+            <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-100 px-4 py-4 flex items-center justify-between gap-3">
+              <p className="text-sm text-rose-900 font-medium leading-snug">
+                Maya created a look for you — add it to a lookbook?
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = lookPromptIdx;
+                    setLookPromptIdx(null);
+                    handleSaveMessage(idx);
+                  }}
+                  className="rounded-xl px-3 py-2 text-xs font-semibold text-white"
+                  style={{ background: 'var(--grad-deep)' }}
+                >
+                  Add to Lookbook
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLookPromptIdx(null)}
+                  aria-label="Dismiss"
+                  className="text-rose-400 hover:text-rose-700 transition-colors text-base leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Input */}
           <div className="mt-3 rounded-2xl border border-neutral-200 bg-white shadow-sm focus-within:border-brand focus-within:shadow-md transition-all overflow-hidden">
