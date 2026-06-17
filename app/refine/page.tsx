@@ -253,7 +253,7 @@ export default function RefinePage() {
             </button>
           </div>
         </div>
-        <p className="mt-2 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
+        <p className="mt-4 text-sm text-neutral-500 leading-relaxed">There are no beauty rules here. Just thoughtful guidance, experimentation, and a deeper understanding of what makes you feel like yourself.</p>
       </div>
 
       {tab === 'chat' && (
@@ -263,7 +263,7 @@ export default function RefinePage() {
           {intakeComplete === false && (
             <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col items-center text-center gap-3">
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Help Maya understand your coloring and current relationship to makeup.
+                Help Maya understand your coloring, features, and current relationship to makeup.
               </p>
               <a
                 href="/intake"
