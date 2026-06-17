@@ -6,7 +6,7 @@ import type { SavedLook } from '@/app/looks/page';
 
 const fraunces = Fraunces({ subsets: ['latin'], weight: ['400', '600', '700'], style: ['normal', 'italic'] });
 
-const CANONICAL = ['Everyday', 'Business', 'Out & About', 'Evening', 'Formal', 'Special Events'];
+const CANONICAL = ['Everyday', 'Work', 'Date Night', 'Evening', 'Formal', 'Special Occasions'];
 const DEFAULT_SWATCH = 'linear-gradient(to bottom, #E1B9AB, #C9A9B0)';
 const DEFAULT_STRIP  = 'linear-gradient(to right, #E1B9AB, #C9A9B0)';
 

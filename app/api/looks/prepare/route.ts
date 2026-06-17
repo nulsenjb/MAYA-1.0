@@ -31,12 +31,12 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join('\n');
 
     const existingLookbooks = (lookbooks ?? []).filter(Boolean);
-    const defaultLookbooks = ['Everyday', 'Business', 'Out & About', 'Evening', 'Formal', 'Special Events'];
+    const defaultLookbooks = ['Everyday', 'Work', 'Date Night', 'Evening', 'Formal', 'Special Occasions'];
     const allLookbooks = [...new Set([...defaultLookbooks, ...existingLookbooks])];
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      max_tokens: 200,
+      max_tokens: 600,
       messages: [
         {
           role: 'system',
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         },
         {
           role: 'user',
-          content: `The user wants to save this Maya message to their lookbook:\n\n"${content}"\n\nUser context:\n${userContext || 'Not available'}\n\nLookbook categories to choose from (pick the best fit): ${allLookbooks.join(', ')}\n\nThe canonical categories are: Everyday, Business, Out & About, Evening, Formal, Special Events.\n\nReturn ONLY a JSON object:\n{ "title": "short 3–6 word name for this saved look", "why": "one warm sentence on why this works for this specific user, referencing their undertone or contrast where relevant, in Maya's voice — observational, never a rule", "suggestedLookbook": "the single best-fit category name from the list above" }\n\nNo preamble. No markdown. JSON only.`,
+          content: `The user wants to save this Maya message to their lookbook:\n\n"${content}"\n\nUser context:\n${userContext || 'Not available'}\n\nLookbook categories (pick the single best fit): ${allLookbooks.join(', ')}\n\nReturn ONLY this JSON object — no preamble, no markdown:\n{\n  "title": "short 3–6 word name for this saved look",\n  "why": "one warm sentence on why this works for this specific user, referencing their undertone or contrast where relevant, in Maya's voice — observational, not a rule",\n  "suggestedLookbook": "best-fit category name from the list above",\n  "steps": ["clean, ordered, imperative steps to recreate the look, one action each — rewrite the source message into tidy steps, no conversational filler"],\n  "palette": ["2 to 4 hex color strings (e.g. #C2918C) for the look's main colors"]\n}`,
         },
       ],
     });
@@ -57,6 +57,8 @@ export async function POST(req: NextRequest) {
       title: result.title || 'Saved look',
       why: result.why || '',
       suggestedLookbook: result.suggestedLookbook || 'Everyday',
+      steps: Array.isArray(result.steps) ? result.steps : [],
+      palette: Array.isArray(result.palette) ? result.palette : [],
     });
   } catch (err) {
     console.error('Looks prepare error:', err);

@@ -17,9 +17,11 @@ type SaveCard = {
   isNew: boolean;
   saving: boolean;
   confirmation: string;
+  steps: string[];
+  palette: string[];
 };
 
-const DEFAULT_LOOKBOOKS = ['Everyday', 'Evenings', 'Events', 'Experiments'];
+const DEFAULT_LOOKBOOKS = ['Everyday', 'Work', 'Date Night', 'Evening', 'Formal', 'Special Occasions'];
 
 export default function RefinePage() {
   const [tab, setTab] = useState<'chat' | 'notes'>('chat');
@@ -159,6 +161,8 @@ export default function RefinePage() {
         isNew: false,
         saving: false,
         confirmation: '',
+        steps: data.steps ?? [],
+        palette: data.palette ?? [],
       });
     } catch {
       // silently fail — button just returns to normal state
@@ -181,9 +185,9 @@ export default function RefinePage() {
         title: saveCard.title,
         why: saveCard.why,
         lookbook: resolvedLookbook,
-        steps: msg.content.split('\n').filter(l => l.trim()),
+        steps: saveCard.steps,
+        palette: saveCard.palette,
         occasion: '',
-        palette: [],
       }),
     });
 
