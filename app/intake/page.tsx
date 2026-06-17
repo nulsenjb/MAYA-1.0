@@ -116,7 +116,6 @@ export default function IntakePage() {
   const [makeupIssues, setMakeupIssues] = useState<string[]>([]);
   const [goalNotes, setGoalNotes] = useState('');
 
-  const [productsList, setProductsList] = useState('');
   const [struggleCategories, setStruggleCategories] = useState<string[]>([]);
 
   const [photos, setPhotos] = useState<File[]>([]);
@@ -209,7 +208,7 @@ export default function IntakePage() {
       case 2:
         return Boolean(makeupExperience && goalNotes.trim());
       case 3:
-        return Boolean(productsList.trim() && struggleCategories.length > 0);
+        return Boolean(struggleCategories.length > 0);
       case 4:
         return Boolean(desiredFeeling.length > 0 && targetSituations);
       default:
@@ -247,7 +246,6 @@ export default function IntakePage() {
       makeup_experience: makeupExperience,
       makeup_issues: makeupIssues,
       goal_notes: goalNotes,
-      products_list: productsList,
       struggle_categories: struggleCategories,
       desired_feeling: desiredFeeling,
       target_situations: targetSituations,
@@ -626,20 +624,9 @@ export default function IntakePage() {
           <>
             <SectionHeader
               stepNum={3}
-              title="Your products."
-              subtitle="Start simple. We'll build from here."
+              title="Where you struggle."
+              subtitle="This helps Maya know where to focus."
             />
-            <Question
-              label="List up to 8 makeup products you currently use most often."
-              hint="Brand + shade if you know it. Example: Blush: Rare Beauty — Hope / Foundation: NARS — Mont Blanc"
-            >
-              <Textarea
-                value={productsList}
-                onChange={setProductsList}
-                placeholder="List your products here, one per line…"
-                rows={6}
-              />
-            </Question>
             <Question
               label="Which categories do you struggle with most?"
               hint="Choose up to 3"
