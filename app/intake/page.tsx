@@ -307,7 +307,7 @@ export default function IntakePage() {
           disabled={isSaving}
           className="rounded-xl bg-brand text-white px-8 py-3.5 text-sm font-semibold hover:bg-[#C08878] transition-colors disabled:opacity-40"
         >
-          {isSaving ? 'Saving…' : 'See your dashboard →'}
+          {isSaving ? 'Saving…' : 'See your dossier →'}
         </button>
         {saveError && <p className="mt-4 text-xs text-red-500">{saveError}</p>}
       </div>

@@ -47,36 +47,46 @@ function DossierContent() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12 min-h-screen bg-rose-50">
+
       {isNew && (
-        <div className="rounded-2xl bg-neutral-900 text-white p-6 mb-8">
-          <div className="flex items-start justify-between gap-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-2">
-                Your profile is ready
-              </p>
-              <p className="text-sm text-neutral-300 leading-relaxed max-w-md">
-                This is your personalized beauty guide — built around your coloring, your products, and how you like to wear makeup. Come back anytime to refine it.
-              </p>
-            </div>
-            <Link
-              href="/refine"
-              className="text-xs text-neutral-500 hover:text-white transition-colors whitespace-nowrap shrink-0"
-            >
-              Dashboard →
-            </Link>
-          </div>
+        <div className="rounded-2xl border border-rose-200 bg-white p-8 mb-8 flex flex-col items-center text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-rose-400 mb-3">
+            Your profile is ready
+          </p>
+          <p className="text-sm text-rose-700 leading-relaxed max-w-md">
+            This is your personalized beauty guide — built around your coloring, your products, and how you like to wear makeup. Come back anytime to refine it.
+          </p>
+          <Link
+            href="/refine"
+            className="mt-6 rounded-2xl px-6 py-3 text-sm font-semibold text-white"
+            style={{ background: 'var(--grad-deep)' }}
+          >
+            Explore with Maya →
+          </Link>
         </div>
       )}
 
       {initialLoading ? (
         <p className="text-sm text-neutral-500">Loading…</p>
       ) : dossier ? (
-        <DossierRenderer dossier={dossier.content} />
+        <>
+          <DossierRenderer dossier={dossier.content} />
+          <div className="mt-12 flex justify-center">
+            <Link
+              href="/refine"
+              className="rounded-2xl px-6 py-3 text-sm font-semibold text-white"
+              style={{ background: 'var(--grad-deep)' }}
+            >
+              Explore with Maya →
+            </Link>
+          </div>
+        </>
       ) : (
         <div className="rounded-3xl border bg-white p-8 text-neutral-600 shadow-sm">
           No dossier yet. <Link href="/intake" className="underline">Complete your intake</Link> to generate one.
         </div>
       )}
+
     </main>
   );
 }
